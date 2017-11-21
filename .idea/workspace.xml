@@ -13,16 +13,19 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="CoverageDataManager">
-    <SUITE FILE_PATH="coverage/martaHack$martaHack.coverage" NAME="martaHack Coverage Results" MODIFIED="1511234127255" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/martaHack$martaHack.coverage" NAME="martaHack Coverage Results" MODIFIED="1511290809649" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="FileEditorManager">
     <leaf>
       <file leaf-file-name="martaHack.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/martaHack.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1327">
-              <caret line="40" column="12" lean-forward="true" selection-start-line="40" selection-start-column="12" selection-end-line="40" selection-end-column="12" />
-              <folding />
+            <state relative-caret-position="148">
+              <caret line="38" column="79" lean-forward="true" selection-start-line="38" selection-start-column="79" selection-end-line="38" selection-end-column="79" />
+              <folding>
+                <marker date="1511290827268" expanded="false" signature="3371:3537" ph="..." />
+                <marker date="1511290827268" expanded="false" signature="3384:3473" ph="..." />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -168,7 +171,14 @@
       <option name="project" value="LOCAL" />
       <updated>1511238265145</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="test commit from ide">
+      <created>1511239215806</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1511239215806</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -259,9 +269,12 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/martaHack.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1327">
-          <caret line="40" column="12" lean-forward="true" selection-start-line="40" selection-start-column="12" selection-end-line="40" selection-end-column="12" />
-          <folding />
+        <state relative-caret-position="148">
+          <caret line="38" column="79" lean-forward="true" selection-start-line="38" selection-start-column="79" selection-end-line="38" selection-end-column="79" />
+          <folding>
+            <marker date="1511290827268" expanded="false" signature="3371:3537" ph="..." />
+            <marker date="1511290827268" expanded="false" signature="3384:3473" ph="..." />
+          </folding>
         </state>
       </provider>
     </entry>

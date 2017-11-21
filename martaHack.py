@@ -1,5 +1,7 @@
 from tkinter import *
 import pymysql
+import hashlib
+
 
 class MartaHack:
     def __init__(self,homeWin):
@@ -37,7 +39,12 @@ class MartaHack:
         b1=Button(passF,text="Register",bg=self.fgColor1,command=self.register)
         b1.grid(row=1,column=0,sticky=NSEW,pady=5,padx=5)
 
+        self.userE = e1
+        self.passE = e2
+
     def logIn(self):
+        print(hashlib.sha224(self.userE.get()).hexdigest())
+        query = '''select'''
         pass
         # add code and sql here to determine if credentials match an account
         # if not, message an error back
@@ -68,6 +75,7 @@ class MartaHack:
         pass
 
     def adminStationMgt(self):
+        # withdraw adminHome?? and then build new window
         # buttons to call self.viewStation, self.createStation
         pass
 
@@ -93,6 +101,7 @@ class MartaHack:
         pass
 
     def logOut(self):
+        pass
         # must destroy all windows (a bunch of try excepts)
         # make logIn reappear
 
