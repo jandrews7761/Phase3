@@ -11,8 +11,9 @@ class MartaHack:
 
         self.bgColor1 = "SlateGray"
         self.bgColor2 = "tan2"
-        self.fgColor1 = "burlywood4"
+        self.fgColor1 = "burlywood"
         self.fgColor2 = "burlywood1"
+        # commentzzzz
 
         self.homeWin = homeWin
         self.homeWin.protocol("WM_DELETE_WINDOW",self.endProgram)
