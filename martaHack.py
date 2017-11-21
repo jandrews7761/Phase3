@@ -13,7 +13,6 @@ class MartaHack:
         self.bgColor2 = "tan2"
         self.fgColor1 = "burlywood"
         self.fgColor2 = "burlywood1"
-        # commentzzzz
 
         self.homeWin = homeWin
         self.homeWin.protocol("WM_DELETE_WINDOW",self.endProgram)
@@ -47,6 +46,8 @@ class MartaHack:
 
 
     def register(self):
+        # withdraw home window and create a new register window
+        # the register button must call a 
         pass
 
     def adminHome(self):
