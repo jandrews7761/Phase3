@@ -3,6 +3,7 @@ import pymysql
 import hashlib
 
 
+
 class MartaHack:
     def __init__(self,homeWin):
         self.db = pymysql.connect(host='academic-mysql.cc.gatech.edu',
@@ -43,8 +44,13 @@ class MartaHack:
         self.passE = e2
 
     def logIn(self):
-        print(hashlib.sha224(self.userE.get()).hexdigest())
-        query = '''select'''
+        pwd = self.passE.get()
+        encoded = pwd.encode('utf-8')
+        m = hashlib.md5()
+        m.update(encoded)
+        hashed = m.hexdigest()
+        usr = self.userE.get()
+        query = '''select isPassenger where username = ''' + usr + ''' and pass = ''' + hashed
         pass
         # add code and sql here to determine if credentials match an account
         # if not, message an error back
