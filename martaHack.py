@@ -11,7 +11,7 @@ class MartaHack:
 
         self.bgColor1 = "SlateGray"
         self.bgColor2 = "tan2"
-        self.fgColor1 = "burlywood"
+        self.fgColor1 = "burlywood4"
         self.fgColor2 = "burlywood1"
 
         self.homeWin = homeWin
