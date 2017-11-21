@@ -42,19 +42,59 @@ class MartaHack:
         # add code and sql here to determine if credentials match an account
         # if not, message an error back
         # if so, ascertain admin or reg user
-        # call either self.passHome() or self.adminHome()
-
+        # withdraw homewin, and call either self.passHome() or self.adminHome()
 
     def register(self):
         # withdraw home window and create a new register window
-        # the register button must call a 
+        # the register button must call a registerNewUser method
+        pass
+
+    def registerNewUser(self):
+        # add code to check if entries are valid
+        # if not error
+        # if so, try to insert into db with mysql, catch pass
+        # if all successfull, message "account created"
+        # withdraw (destroy?) register win, call passHome if all successfull
         pass
 
     def adminHome(self):
+        # create adminHome page
+        # buttons to call self.adminStationMgt, self.adminSuspMgt,
+            # self.adminCardMgt,self.pflowReport, self.logOut
         pass
 
     def passHome(self):
+        # buttons to call self.cardMgt, self.tripHist, self.logOut
         pass
+
+    def adminStationMgt(self):
+        # buttons to call self.viewStation, self.createStation
+        pass
+
+    def viewStation(self):
+        pass
+
+    def createStation(self):
+        pass
+
+    def adminSuspMgt(self):
+        pass
+
+    def adminCardMgt(self):
+        pass
+
+    def pflowReport(self):
+        pass
+
+    def cardMgt(self):
+        pass
+
+    def tripHist(self):
+        pass
+
+    def logOut(self):
+        # must destroy all windows (a bunch of try excepts)
+        # make logIn reappear
 
     def endProgram(self):
         try:
