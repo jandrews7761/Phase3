@@ -6,11 +6,16 @@ import tkinter as tk
 import tkinter.font as tkFont
 import tkinter.ttk as ttk
 import csv
+import random
+from re import match
 
+marta_header = ["Time", "Source", "Destination", "Fare", "Card #"]
+marta_list = [("Time", "Source", "Destination", "Fare", "Card #")]
+
+# THINGS TO DO: registerNewUser method needs to suspend buzzcards if new user
+# has an old buzzcard
 
 class MultiColumnListbox(object):
-
-
     def __init__(self,list_Win):
         self.tree = None
         self._setup_widgets()
@@ -74,16 +79,13 @@ class MultiColumnListbox(object):
         tree.heading(col, command=lambda col=col: self.sortby(tree, col,
             int(not descending)))
 
-marta_header = ["Time", "Source", "Destination", "Fare", "Card #"]
-marta_list = [("Time", "Source", "Destination", "Fare", "Card #")]
-
 class MartaHack:
     def __init__(self,homeWin):
-        # self.db = pymysql.connect(host='academic-mysql.cc.gatech.edu',
-        #                      user='cs4400_Group_14',
-        #                      password='_MlrJUuF',
-        #                      db='cs4400_Group_14')
-        # self.cursor = self.db.cursor()
+        self.db = pymysql.connect(host='academic-mysql.cc.gatech.edu',
+                             user='cs4400_Group_14',
+                             password='_MlrJUuF',
+                             db='cs4400_Group_14')
+        self.cursor = self.db.cursor()
 
         self.bgColor1 = "SlateGray"
         self.bgColor2 = "tan2"
@@ -169,11 +171,6 @@ class MartaHack:
         e4 = Entry(topF)
         e4.grid(row=3,column=1,sticky=NSEW,pady=5,padx=5)
 
-        regWin = self.regWin
-        listbox = MultiColumnListbox(regWin)
-        l5 = listbox
-        
-
         botF = Frame(self.regWin,bg=self.bgColor1)
         botF.grid(row=1,column=0,pady=15,padx=10)
         self.v = StringVar()
@@ -205,6 +202,7 @@ class MartaHack:
         # if all successfull, message "account created"
         # withdraw (destroy?) register win, call passHome if all successfull
         failed = False
+        print(len(self.bzNumE.get()),self.v.get())
         if self.usrE.get() == "":
             failed = True
             messagebox.showerror("No Username Provided","Enter a username")
@@ -214,10 +212,12 @@ class MartaHack:
         elif len(self.pass1e.get()) < 8:
             failed = True
             messagebox.showerror("Password too short","Password needs to be at least eight characters")
-        elif len(self.bzNumE.get()) != 16 and self.v == "True":
+        elif len(self.bzNumE.get()) != 16 and self.v.get() == "True":
             failed = True
             messagebox.showerror("Invalid Buzzcard","Buzzcard must be 16 characters")
-        # CHECK FOR EMAIL ADDRESS VALIDITY
+        elif not match ("^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z0-9]+)$", self.eAddE.get()):
+            failed = True
+            messagebox.showerror("Invalid Email","Please enter a valid email address")
         else:
             sql1 = '''SELECT
                         Username, Email
@@ -229,7 +229,7 @@ class MartaHack:
             sql2 = '''SELECT
                         BelongsTo
                     FROM
-                        Brezecard
+                        Breezecard
                     WHERE
                         BreezecardNum = %s'''
             sql3 = '''SELECT Username FROM User WHERE Username = %s'''
@@ -243,14 +243,14 @@ class MartaHack:
             # after this point, nothing can fail
             # did the user have their own buzznum, either way insert data
             autoGen = False
-            if self.v == "True":
+            if self.v.get() == "True":
                 c2 = self.cursor.execute(sql2,(self.bzNumE.get()))
                 if c2 >= 1:
                     autoGen = True
                     # SUSPEND THE BUZZCARD
                 else:
                     bzNum = self.bzNumE.get()
-            elif self.v == "False" or autoGen:
+            elif self.v.get() == "False" or autoGen:
                 # AUTO GENERATE HERE
                 bzNum = self.autoGenerate()
                 # AUTO GENERATE HERE
@@ -266,7 +266,7 @@ class MartaHack:
             try:
                 self.cursor.execute(sql1,(self.usrE.get(),passHash,False))
                 self.cursor.execute(sql2,(self.usrE.get(),self.eAddE.get()))
-                messagebox.showinfo("Success","Account successfully created")
+                messagebox.showinfo("Success","Account successfully created with buzzcard: " + bzNum)
                 self.db.commit()
                 self.regWin.destroy()
                 self.passHome()
@@ -275,7 +275,7 @@ class MartaHack:
 
     def autoGenerate(self):
         # AUTO GENERATE A NUMBER HERE
-        bzNum = 1234567891234568
+        bzNum = random.randint(1000000000000000,9999999999999999)
         # AUTO GENERATE A NUMBER HERE
         bzNum = str(bzNum)
         sql = '''SELECT BreezecardNum FROM breezecard WHERE BreezecardNum = %s'''
@@ -643,7 +643,36 @@ class MartaHack:
         #     listbox.insert(END, row_format.format(*items, sp=" " * 2))
 
     def tripHistQuery(self):
-        pass
+        sql = '''SELECT
+                    t2.startTime,
+                    t2.source AS source,
+                    Station.name AS destination,
+                    t2.fare,
+                    t2.bzNum
+                FROM
+                    (SELECT
+                        t1.StartTime,
+                            t1.sourceNode AS source,
+                            Trip.EndsAt AS destination,
+                            t1.fare,
+                            t1.bzNum
+                    FROM
+                        (SELECT
+                        Trip.StartTime,
+                            Station.Name AS sourceNode,
+                            Trip.Tripfare AS fare,
+                            Trip.breezecardNum AS bzNum
+                    FROM
+                        Trip
+                    INNER JOIN Station ON Station.StopID = Trip.StartsAt
+                    WHERE
+                        BreezecardNum = %s) AS t1
+                    INNER JOIN Trip ON t1.StartTime = Trip.StartTime
+                    WHERE
+                        Trip.BreezecardNum = %s) AS t2
+                        INNER JOIN
+                    Station ON t2.destination = Station.stopID
+                ORDER BY startTime DESC'''
 
     def logOut(self):
         pass
