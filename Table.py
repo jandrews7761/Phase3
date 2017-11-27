@@ -12,7 +12,7 @@ class MultiColumnListbox(object):
 
     def _setup_widgets(self):
         s = """click on header to sort by that column
-to change width of column drag boundary
+        to change width of column drag boundary
         """
         msg = ttk.Label(wraplength="4i", justify="left", anchor="n",
             padding=(10, 2, 10, 6), text=s)
@@ -37,7 +37,7 @@ to change width of column drag boundary
     def _build_tree(self):
         for col in car_header:
             self.tree.heading(col, text=col.title(),
-                command=lambda c=col: sortby(self.tree, c, 0))
+                command=lambda c=col: self.sortby(self.tree, c, 0))
             self.tree.column(col,
                 width=tkFont.Font().measure(col.title()))
 
@@ -50,25 +50,20 @@ to change width of column drag boundary
 
 
 
-def sortby(tree, col, descending):
-    """sort tree contents when a column header is clicked on"""
-    data = [(tree.set(child, col), child) \
-        for child in tree.get_children('')]
-    data.sort(reverse=descending)
-    for ix, item in enumerate(data):
-        tree.move(item[1], '', ix)
-    tree.heading(col, command=lambda col=col: sortby(tree, col, \
-        int(not descending)))
+    def sortby(self,tree, col, descending):
+        """sort tree contents when a column header is clicked on"""
+        data = [(tree.set(child, col), child) \
+            for child in tree.get_children('')]
+        data.sort(reverse=descending)
+        for ix, item in enumerate(data):
+            tree.move(item[1], '', ix)
+        tree.heading(col, command=lambda col=col: self.sortby(tree, col,
+            int(not descending)))
 
 
 
-currencies = []
-with open('Try.csv', 'r') as f:
-    reader = csv.reader(f, delimiter=',')
-    currencies = list(reader)
 
-
-car_list = currencies
+car_list = [("Time", "Source", "Destination", "Fare", "Card #")]
 car_header = ["Time", "Source", "Destination", "Fare", "Card #"]
 
 if __name__ == '__main__':
