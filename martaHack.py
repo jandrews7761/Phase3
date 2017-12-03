@@ -182,6 +182,8 @@ class MartaHack:
         butF.grid(row=2,column=0,pady=15,padx=10)
         b1 = Button(butF,text = "Create Account",command=self.registerNewUser,bg=self.fgColor1)
         b1.grid(row=0,column=0,pady=5,padx=5,sticky=NSEW)
+        b2 = Button(butF,text = "Back to Log In", command = self.logOut)
+        b2.grid(row=0,column=1,pady=5,padx=5,sticky=NSEW)
 
         self.usrE = e1
         self.eAddE = e2
@@ -442,9 +444,9 @@ class MartaHack:
         print(self.stationMgtListBox.gotClicked())
 
     def adminSuspMgt(self):
-        self.adminHomeWin.withdraw()
+        #self.adminHomeWin.withdraw()
         self.aSusWin = Toplevel()
-        self.aSusWin.protocol("WM_DELETE_WINDOW", self.endProgram)
+        #self.aSusWin.protocol("WM_DELETE_WINDOW", self.endProgram)
         self.aSusWin.title("Suspended Cards")
         self.aSusWin.configure(bg=self.bgColor1)
 
@@ -470,9 +472,9 @@ class MartaHack:
         print(self.SuspCardListBox.gotClicked())
 
     def adminCardMgt(self):
-        self.adminHomeWin.withdraw()
+        #self.adminHomeWin.withdraw()
         self.aCardWin = Toplevel()
-        self.aCardWin.protocol("WM_DELETE_WINDOW", self.endProgram)
+        #self.aCardWin.protocol("WM_DELETE_WINDOW", self.endProgram)
         self.aCardWin.title("Breeze Card Management")
         self.aCardWin.configure(bg=self.bgColor1)
 
@@ -482,8 +484,8 @@ class MartaHack:
         l1.grid(row=0, column=0, sticky=NSEW, pady=5, padx=5)
         l2 = Label(topF, text="Card Number", bg=self.bgColor1)
         l2.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
-        e1 = Entry(topF)
-        e1.grid(row=0, column=1, sticky=NSEW, pady=5, padx=5)
+        #e1 = Entry(topF)
+        #e1.grid(row=0, column=1, sticky=NSEW, pady=5, padx=5)
         e2 = Entry(topF)
         e2.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5)
         l3 = Label(topF, text="Value between", bg=self.bgColor1)
@@ -596,16 +598,17 @@ class MartaHack:
                     Trip.startTime >= %s
                         AND Trip.startTime <= %s
                 GROUP BY StationName'''
-        if self.startTimeE.get() == "" or not match("(\d{4})-(\d{2})-(\d{2})(\d{2}):(\d{2}):(\d{2})",self.startTimeE.get()):
+        p = "^$|(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})"
+        if self.startTimeE.get() == "" or not match(p,self.startTimeE.get()):
             startTime = "1970-01-01 1:00:00"
         else:
             startTime = self.startTimeE.get()
-        if self.endTimeE.get() == "" or not     match("(\d{4})-(\d{2})-(\d{2})(\d{2}):(\d{2}):(\d{2})",self.endTimeE.get()):
+        if self.endTimeE.get() == "" or not     match(p,self.endTimeE.get()):
             endTime = "2025-01-01 12:00:00"
         else:
             endTime = self.endTimeE.get()
 
-        if not match("(\d{4})-(\d{2})-(\d{2})(\d{2}):(\d{2}):(\d{2})",self.startTimeE.get()) or not match("(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})",self.endTimeE.get()):
+        if not match(p,self.startTimeE.get()) or not match(p, self.endTimeE.get()):
             messagebox.showerror("Incorrect formatting", "Incorrect starttime/endtime formats. Please enter as yyyy-mm-dd hh:mm:ss. Currently displaying all data")
         try:
             c = self.cursor.execute(sql,(startTime, endTime, startTime, endTime))
