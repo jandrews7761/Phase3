@@ -529,33 +529,37 @@ class MartaHack:
 
         topF = Frame(self.aCardWin, bg=self.bgColor1)
         topF.grid(row=0, column=0, pady=15, padx=10)
+        l5 = Label(topF, text="Breeze Cards", bg=self.bgColor1, font= ("bold",16))
+        l5.grid(row=0, column=0, sticky=NSEW, pady=5, padx=5)
+        l6 = Label(topF, text="Search/Filter", bg=self.bgColor1, font = (12))
+        l6.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
         l1 = Label(topF, text="Owner", bg=self.bgColor1)
-        l1.grid(row=0, column=0, sticky=NSEW, pady=5, padx=5)
+        l1.grid(row=2, column=0, sticky=NSEW, pady=5, padx=5)
         l2 = Label(topF, text="Card Number", bg=self.bgColor1)
-        l2.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
+        l2.grid(row=3, column=0, sticky=NSEW, pady=5, padx=5)
         e1 = Entry(topF)
-        e1.grid(row=0, column=1, sticky=NSEW, pady=5, padx=5)
+        e1.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
         e2 = Entry(topF)
-        e2.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5)
+        e2.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
         l3 = Label(topF, text="Value between", bg=self.bgColor1)
-        l3.grid(row=3, column=0, sticky=NSEW, pady=5, padx=5)
+        l3.grid(row=4, column=0, sticky=NSEW, pady=5, padx=5)
         e3 = Entry(topF)
-        e3.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
+        e3.grid(row=4, column=1, sticky=NSEW, pady=5, padx=5)
         l4 = Label(topF, text="and", bg=self.bgColor1)
-        l4.grid(row=3, column=2, sticky=NSEW, pady=5, padx=5)
+        l4.grid(row=4, column=2, sticky=NSEW, pady=5, padx=5)
         e4 = Entry(topF)
-        e4.grid(row=3, column=3, sticky=NSEW, pady=5, padx=5)
+        e4.grid(row=4, column=3, sticky=NSEW, pady=5, padx=5)
 
         rightF = Frame(self.aCardWin, bg=self.bgColor1)
         rightF.grid(row=1, column=0, pady=15, padx=10)
         b1 = Button(topF, text="Reset", bg=self.fgColor1, command=self.logIn)
-        b1.grid(row=1, column=4, sticky=NSEW, pady=5, padx=5)
+        b1.grid(row=3, column=4, sticky=NSEW, pady=5, padx=5)
         b2 = Button(topF, text="Update Filter", bg=self.fgColor1, command=self.tripHist)
-        b2.grid(row=2, column=4, sticky=NSEW, pady=5, padx=5)
+        b2.grid(row=4, column=4, sticky=NSEW, pady=5, padx=5)
         self.v = StringVar()
         self.v.set("False")
         rb1 = Radiobutton(topF, text="Show Suspended Cards", variable=self.v, value="True", bg=self.fgColor1)
-        rb1.grid(row=0, column=4, columnspan=1, pady=5, padx=5, sticky=NSEW)
+        rb1.grid(row=2, column=4, columnspan=1, pady=5, padx=5, sticky=NSEW)
 
         botF = Frame(self.aCardWin, bg=self.bgColor1)
         botF.grid(row=2, column=0, pady=15, padx=10)
@@ -672,8 +676,13 @@ class MartaHack:
         self.passCardWin.title("Manage Cards")
         self.passCardWin.configure(bg=self.bgColor1)
 
+        headerF = Frame(self.passCardWin, bg=self.bgColor1)
+        headerF.grid(row=0, column=0, pady=2, padx=2, columnspan=2)
+        l4 = Label(headerF, text="Breeze Cards", bg=self.bgColor1, font=("bold"), anchor='w')
+        l4.grid(row=0, column=0, sticky=NSEW, pady=2, padx=5)
+
         topF = Frame(self.passCardWin, bg=self.bgColor1)
-        topF.grid(row=0, column=0, pady=15, padx=10)
+        topF.grid(row=1, column=0, pady=5, padx=10, columnspan=2)
         header = ["Card #", "New Owner", "Date Suspended", "Previous owner"]
         data = [("34567890", "Conn Man", "6/5/3", "Avery"),
                 ("3456789", "Moo Daddy", "56/78/92", "Moo Son")]
@@ -685,10 +694,10 @@ class MartaHack:
         b1.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5)
 
         botF = Frame(self.passCardWin, bg=self.bgColor1)
-        botF.grid(row=1, column=0, pady=15, padx=10)
+        botF.grid(row=2, column=0, pady=15, padx=10)
 
         l1 = Label(botF, text="Add Value to Selected Card", bg=self.bgColor1)
-        l1.grid(row=0, column=0, sticky=NSEW, pady=5, padx=5)
+        l1.grid(row=0, column=1, sticky=NSEW, pady=5, padx=5)
 
         l2 = Label(botF, text="Credit Card #", bg=self.bgColor1)
         l2.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
@@ -726,9 +735,9 @@ class MartaHack:
         self.db.commit()
 
     def tripHist(self):
-        self.passHomeWin.withdraw()
+        #self.passHomeWin.withdraw()
         self.tripHistWin = Toplevel()
-        self.tripHistWin.protocol("WM_DELETE_WINDOW", self.endProgram)
+        #self.tripHistWin.protocol("WM_DELETE_WINDOW", self.endProgram)
         self.tripHistWin.title("Trip History")
         self.tripHistWin.configure(bg=self.bgColor1)
 
@@ -755,7 +764,7 @@ class MartaHack:
         header = ["Card #", "New Owner", "Date Suspended", "Previous owner"]
         data = [("34567890", "Conn Man", "6/5/3", "Avery"),
                 ("3456789", "Moo Daddy", "56/78/92", "Moo Son")]
-        self.TripHistListBox = MultiColumnListbox(topF, header, data)
+        self.TripHistListBox = MultiColumnListbox(botF, header, data)
 
     def tripHistQuery(self):
         sql = '''SELECT
