@@ -26,7 +26,7 @@ class MultiColumnListbox(object):
         self.f = frame
         self.tree = None
         self._setup_widgets()
-        self._build_tree(self.car_list)
+        self._build_tree()
 
     def _setup_widgets(self):
         container = ttk.Frame(self.f)
@@ -45,8 +45,7 @@ class MultiColumnListbox(object):
         container.grid_columnconfigure(0, weight=1)
         container.grid_rowconfigure(0, weight=1)
 
-    def _build_tree(self,car_list):
-        self.car_list = car_list
+    def _build_tree(self):
         for col in self.car_header:
             self.tree.heading(col, text=col.title(),
                 command=lambda c=col: self.sortby(self.tree, c, 0))
@@ -467,10 +466,20 @@ class MartaHack:
         l1.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
 
     def assignSuspCardNewOwner(self):
-        print(self.SuspCardListBox.gotClicked())
+        sql = '''Update ‘cs4400_Group_14’.’Breezecard’  
+        set BelongsTo = %s 
+        where BreezecardNum = %s;
+        
+        Delete BreezecardNum from ‘cs4400_Group_14’.’Conflict’ 
+        where BreezecardNum = %s;
+                    '''
+        self.cursor.execute(sql, Username, cardSelected, cardSelected)
 
     def assignSuspCardOldOwner(self):
-        print(self.SuspCardListBox.gotClicked())
+        sql = '''Delete BreezecardNum from ‘cs4400_Group_14’.’Conflict’ 
+        where BreezecardNum = %s
+                '''
+        self.cursor.execute(sql, cardSelected)
 
     def adminCardMgt(self):
         #self.adminHomeWin.withdraw()
@@ -503,7 +512,7 @@ class MartaHack:
         b1 = Button(topF, text="Reset", bg=self.fgColor1, command=self.logIn)
         b1.grid(row=1, column=4, sticky=NSEW, pady=5, padx=5)
         b2 = Button(topF, text="Update Filter", bg=self.fgColor1, command=self.tripHist)
-        b2.grid(row=2, column=4, sticky=NSEW, pady=5, padx=5)
+        b2.grid(row=3, column=4, sticky=NSEW, pady=5, padx=5)
         self.v = StringVar()
         self.v.set("False")
         rb1 = Radiobutton(topF, text="Show Suspended Cards", variable=self.v, value="True", bg=self.fgColor1)
@@ -567,9 +576,9 @@ class MartaHack:
     def pFlowUpdate(self):
         # CHECK FOR VALID DATETIMES
         data = self.pFlowQuery()
+        del self.pFlowListBox
         header = ["Station Name", "Passengers In", "Pasengers Out", "Flow", "Revenue"]
-        for item in self.pFlowContainer.grid_slaves():
-            item.destroy()
+        #print(data)
         self.pFlowListBox = MultiColumnListbox(self.pFlowContainer,header,data)
         # POPULATE TABLE WITH VALUES
 
@@ -657,12 +666,27 @@ class MartaHack:
 
         b2 = Button(botF, text="Add Value", bg=self.bgColor1, command=self.addValue)
         b2.grid(row=3, column=2, sticky=NSEW, pady=5, padx=5)
+        b3 = Button(topF, text="Delete Selected Card", bg=self.bgColor1, command=self.deleteCard)
+        b3.grid(row=0, column=3, sticky=NSEW, pady=5, padx=5)
+
+    def deleteCard(self):
+        sql = ''' Delete BelongsTo from ‘cs4400_Group_14’.’Breezecard’ 
+        where BreezecardNum = %s; 
+        '''
+        self.cursor.execute(sql,cardSelected)
 
     def addValue(self):
-        pass
+        sql = '''Update ‘cs4400_Group_14’.’Breezecard’  
+            set Value = %s 
+            where BreezeCardNum = %s;
+            '''
+        self.cursor.execute(sql, valueNew, cardSelected)
 
     def addCard(self):
-        pass
+        sql = '''Insert into ‘cs4400_Group_14’.’Breezecard’ (‘BreezecardNum’, ‘Value’, ‘BelongsTo’) 
+        values (%s, 0, %s);
+        '''
+        self.cursor.execute(sql, BreezeCardNum, Username)
 
     def tripHist(self):
         self.passHomeWin.withdraw()
@@ -746,6 +770,7 @@ class MartaHack:
             pass
         # CLOSE EVERY WIN IN A SEPERATE TRY STATEMENT
         self.homeWin.destroy()
+
 
 win = Tk()
 MartaHack(win)
