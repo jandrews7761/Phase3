@@ -515,10 +515,21 @@ class MartaHack:
         l1.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
 
     def assignSuspCardNewOwner(self):
-        print(self.SuspCardListBox.gotClicked())
+        sql = """Update ‘cs4400_Group_14’.’Breezecard’  
+        set BelongsTo = Username where BreezecardNum = %s;
+
+        Delete BreezecardNum from ‘cs4400_Group_14’.’Conflict’ 
+        where BreezecardNum = %s;
+        """
+
+        self.cursor.execute(sql, cardSelected, cardSelected)
 
     def assignSuspCardOldOwner(self):
-        print(self.SuspCardListBox.gotClicked())
+        sql = """Delete BreezecardNum from ‘cs4400_Group_14’.’Conflict’ 
+        where BreezecardNum = %s;
+        """
+
+        self.cursor.execute(sql, cardSelected)
 
     def adminCardMgt(self):
         #self.adminHomeWin.withdraw()
