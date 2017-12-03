@@ -438,21 +438,9 @@ class MartaHack:
         b4 = Button(botF, text="Set Value of Selected Card", bg=self.bgColor1, command=self.tripHist)
         b4.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
 
-
-        listbox = Listbox(botF)
-        listbox.pack()
-        currencies = {}
-
-        # with open('Try2.csv') as f:
-        #     next(f, None)  # Skip the header.
-        #     reader = csv.reader(f, delimiter=',')
-        #     for Card, Value, Owner in reader:
-        #         currencies[f'{Card} {Value} {Owner}'] = Card
-        #
-        # for key in currencies:
-        #     listbox.insert('end', key)
-        # listbox.grid(row=0, column=0)
-        # listbox.bind('<Key-Return>', lambda event: print(currencies[listbox.selection_get()]))
+        data = [("34567890", "Conn Man", "6/5/3", "Avery"),
+                ("3456789", "Moo Daddy", "56/78/92", "Moo Son")]
+        self.AdminCardListBox = MultiColumnListbox(topF, header, data)
 
     def pFlowReport(self):
         self.adminHomeWin.withdraw()
@@ -534,20 +522,9 @@ class MartaHack:
 
         topF = Frame(self.passCardWin, bg=self.bgColor1)
         topF.grid(row=0, column=0, pady=15, padx=10)
-        listbox = Listbox(topF)
-        listbox.pack()
-        currencies = {}
-
-        # with open('Try2.csv') as f:
-        #     next(f, None)  # Skip the header.
-        #     reader = csv.reader(f, delimiter=',')
-        #     for Card, Value, Owner in reader:
-        #         currencies[f'{Card} {Value} {Owner}'] = Card
-        #
-        # for key in currencies:
-        #     listbox.insert('end', key)
-        # listbox.grid(row=0, column=0)
-        # listbox.bind('<Key-Return>', lambda event: print(currencies[listbox.selection_get()]))
+        data = [("34567890", "Conn Man", "6/5/3", "Avery"),
+                ("3456789", "Moo Daddy", "56/78/92", "Moo Son")]
+        self.PassCardListBox = MultiColumnListbox(topF, header, data)
 
 
         e1 = Entry(topF)
@@ -607,29 +584,10 @@ class MartaHack:
 
         botF = Frame(self.tripHistWin, bg=self.bgColor1)
         botF.grid(row=1, column=0, pady=15, padx=10)
-        listbox = Listbox(botF)
-        listbox.pack()
-        currencies = {}
+        data = [("34567890", "Conn Man", "6/5/3", "Avery"),
+                ("3456789", "Moo Daddy", "56/78/92", "Moo Son")]
+        self.TripHistListBox = MultiColumnListbox(topF, header, data)
 
-        # with open('Try.csv') as f:
-        #     next(f, None)  # Skip the header.
-        #     reader = csv.reader(f, delimiter=',')
-        #     for Fare, Start, Number, TimeS, TimeE in reader:
-        #         currencies[f'{Fare} {Start} {Number} {TimeS} {TimeE}'] = Start
-
-        # for key in currencies:
-        #     listbox.insert('end', key)
-        # listbox.grid(row=0, column=0)
-        # listbox.bind('<Key-Return>', lambda event: print(currencies[listbox.selection_get()]))
-
-        # table = [start]
-        #
-        # headers = ["Time", "Source", "Destination", "Fare", "Card #"]
-        #
-        # row_format = "{:<8}  {:>8}  {:<8}  {:8}"
-        # listbox.insert(0, row_format.format(*headers, sp=" " * 2))
-        # for items in table:
-        #     listbox.insert(END, row_format.format(*items, sp=" " * 2))
 
     def tripHistQuery(self):
         sql = '''SELECT
