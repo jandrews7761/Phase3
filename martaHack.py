@@ -26,7 +26,7 @@ class MultiColumnListbox(object):
         self.f = frame
         self.tree = None
         self._setup_widgets()
-        self._build_tree()
+        self._build_tree(self.car_list)
 
     def _setup_widgets(self):
         container = ttk.Frame(self.f)
@@ -45,7 +45,8 @@ class MultiColumnListbox(object):
         container.grid_columnconfigure(0, weight=1)
         container.grid_rowconfigure(0, weight=1)
 
-    def _build_tree(self):
+    def _build_tree(self,car_list):
+        self.car_list = car_list
         for col in self.car_header:
             self.tree.heading(col, text=col.title(),
                 command=lambda c=col: self.sortby(self.tree, c, 0))
@@ -466,20 +467,10 @@ class MartaHack:
         l1.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
 
     def assignSuspCardNewOwner(self):
-        sql = '''Update ‘cs4400_Group_14’.’Breezecard’  
-        set BelongsTo = %s 
-        where BreezecardNum = %s;
-        
-        Delete BreezecardNum from ‘cs4400_Group_14’.’Conflict’ 
-        where BreezecardNum = %s;
-                    '''
-        self.cursor.execute(sql, Username, cardSelected, cardSelected)
+        print(self.SuspCardListBox.gotClicked())
 
     def assignSuspCardOldOwner(self):
-        sql = '''Delete BreezecardNum from ‘cs4400_Group_14’.’Conflict’ 
-        where BreezecardNum = %s
-                '''
-        self.cursor.execute(sql, cardSelected
+        print(self.SuspCardListBox.gotClicked())
 
     def adminCardMgt(self):
         #self.adminHomeWin.withdraw()
@@ -576,9 +567,9 @@ class MartaHack:
     def pFlowUpdate(self):
         # CHECK FOR VALID DATETIMES
         data = self.pFlowQuery()
-        del self.pFlowListBox
         header = ["Station Name", "Passengers In", "Pasengers Out", "Flow", "Revenue"]
-        #print(data)
+        for item in self.pFlowContainer.grid_slaves():
+            item.destroy()
         self.pFlowListBox = MultiColumnListbox(self.pFlowContainer,header,data)
         # POPULATE TABLE WITH VALUES
 
@@ -668,17 +659,10 @@ class MartaHack:
         b2.grid(row=3, column=2, sticky=NSEW, pady=5, padx=5)
 
     def addValue(self):
-        sql = '''Update ‘cs4400_Group_14’.’Breezecard’  
-            set Value = %s 
-            where BreezeCardNum = %s;
-            '''
-        self.cursor.execute(sql, valueNew, cardSelected)
+        pass
 
     def addCard(self):
-        sql = '''Insert into ‘cs4400_Group_14’.’Breezecard’ (‘BreezecardNum’, ‘Value’, ‘BelongsTo’) 
-        values (%s, 0, %s);
-        '''
-        self.cursor.execute(sql, BreezeCardNum, Username)
+        pass
 
     def tripHist(self):
         self.passHomeWin.withdraw()
@@ -762,7 +746,6 @@ class MartaHack:
             pass
         # CLOSE EVERY WIN IN A SEPERATE TRY STATEMENT
         self.homeWin.destroy()
-
 
 win = Tk()
 MartaHack(win)
