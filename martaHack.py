@@ -12,8 +12,9 @@ from re import match
 marta_header = ["Time", "Source", "Destination", "Fare", "Card #"]
 marta_list = [("Time", "Source", "Destination", "Fare", "Card #")]
 
-# THINGS TO DO: registerNewUser method needs to suspend buzzcards if new user
-# has an old buzzcard
+# THINGS TO DO:
+# registerNewUser method needs to suspend buzzcards if new user has an old  #
+## buzzcard
 # more db.commit()
 # create new station
 # fix viewStation sql capability
@@ -26,7 +27,7 @@ class MultiColumnListbox(object):
         self.f = frame
         self.tree = None
         self._setup_widgets()
-        self._build_tree()
+        self._build_tree(self.car_list)
 
     def _setup_widgets(self):
         container = ttk.Frame(self.f)
@@ -45,7 +46,8 @@ class MultiColumnListbox(object):
         container.grid_columnconfigure(0, weight=1)
         container.grid_rowconfigure(0, weight=1)
 
-    def _build_tree(self):
+    def _build_tree(self,car_list):
+        self.car_list = car_list
         for col in self.car_header:
             self.tree.heading(col, text=col.title(),
                 command=lambda c=col: self.sortby(self.tree, c, 0))
@@ -119,6 +121,7 @@ class MartaHack:
         m.update(encoded)
         hashed = m.hexdigest()
         usr = self.userE.get()
+        self.username = usr
         query = '''SELECT isAdmin FROM User WHERE Username = %s AND Password = %s'''
         c = self.cursor.execute(query,(usr,hashed))
         # c = 1 # instantiating variables when coding off network
@@ -264,6 +267,7 @@ class MartaHack:
                 self.cursor.execute(sql2,(self.usrE.get(),self.eAddE.get()))
                 messagebox.showinfo("Success","Account successfully created with buzzcard: " + bzNum)
                 self.db.commit()
+                self.username = self.usrE.get()
                 self.regWin.destroy()
                 self.passHome()
             except:
@@ -322,22 +326,22 @@ class MartaHack:
         l3.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
 
         #root = Tk()
-        tkvar = StringVar()
+        self.bCardNumvar = StringVar()
         # choices : Fill with sql query for breezecards)
-        choices = {'BreezeCard1', 'BreezeCard2', 'BreezeCard3'}
-        tkvar.set('BreezeCard 1')
+        choices = tuple(self.passHomeQuery())
+        self.bCardNumvar.set(choices[0])
         e1 = Entry(topF)
         e1.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5)
-        e2 = OptionMenu(topF, tkvar, *choices)
+        e2 = OptionMenu(topF, self.bCardNumvar, *choices,command=self.changeCardSelect)
         e2.grid(row=0, column=1, sticky=NSEW, pady=5, padx=5)
         def change_dropdown(*args):
-            print( tkvar.get())
-        tkvar.trace('w', change_dropdown)
+            print(self.bCardNumvar.get())
+        self.bCardNumvar.trace('w', change_dropdown)
 
         l4 = Label(topF, text="Start at", bg=self.bgColor1)
         l4.grid(row=2, column=0, sticky=NSEW, pady=5, padx=5)
-        l5 = Label(topF, text="Trip in Progress", bg=self.bgColor1)
-        l5.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
+        self.startB = Button(topF, text="Start Trip", bg=self.fgColor1, command=self.startTrip)
+        self.startB.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
         l6 = Label(topF, text="Ending at", bg=self.bgColor1)
         l6.grid(row=3, column=0, sticky=NSEW, pady=5, padx=5)
         l7 = Label(topF, text="End Trip", bg=self.bgColor1)
@@ -349,15 +353,60 @@ class MartaHack:
 
         botF = Frame(self.passHomeWin, bg=self.bgColor1)
         botF.grid(row=1, column=0, pady=15, padx=10)
-        self.v = StringVar()
-        self.v.set("False")
+        self.endStation = StringVar()
+        self.endStation.set("False")
 
         l8 = Button(botF, text="View Trip History", bg=self.fgColor1, command = self.tripHist)
         l8.grid(row=1, column=0, pady=5, padx=5, sticky=NSEW)
         l9 = Label(botF, text="", bg=self.bgColor1)
         l9.grid(row=1, column=1, pady=5, padx=5, sticky=NSEW)
-        l10 = Label(botF, text="Log Out", bg=self.bgColor2)
+        l10 = Button(botF, text="Log Out", bg=self.fgColor1,command=self.logOut)
         l10.grid(row=1, column=2, pady=5, padx=5, sticky=NSEW)
+
+        self.passHomeTopF = topF
+        self.changeCardSelect(choices[0])
+
+    def passHomeQuery(self):
+        sql = '''SELECT
+                    BreezecardNum
+                FROM
+                    Breezecard
+                WHERE
+                    BelongsTo LIKE %s
+                        AND BreezecardNum NOT IN (SELECT
+                            Breezecard.BreezecardNum
+                        FROM
+                            Breezecard
+                                JOIN
+                            Conflict ON Breezecard.BreezecardNum = Conflict.BreezecardNum)'''
+        self.cursor.execute(sql,(self.username))
+        data = list(self.cursor.fetchall())
+        print(data)
+        return data
+
+    def changeCardSelect(self,newCard):
+        print("a new card has been selected!")
+        sql = '''select * from Trip where BreezecardNum = %s and EndsAt is null'''
+        print("newCard is", newCard[0])
+        c = self.cursor.execute(sql,(newCard[0]))
+        print(c)
+        if c>=1:
+            try:
+                self.startB.destroy()
+            except:
+                pass
+            self.inProgressLabel = Label(self.passHomeTopF,text= "Trip in Progress", bg=self.bgColor1)
+            self.inProgressLabel.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
+        else:
+            try:
+                self.inProgressLabel.destroy()
+            except:
+                pass
+            self.startB = Button(self.passHomeTopF, text="Start Trip", bg=self.fgColor1, command=self.startTrip)
+            self.startB.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
+
+    def startTrip(self):
+        pass
 
     def adminStationMgt(self):
         # withdraw adminHome?? and then build new window
@@ -466,20 +515,10 @@ class MartaHack:
         l1.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
 
     def assignSuspCardNewOwner(self):
-        sql = '''Update ‘cs4400_Group_14’.’Breezecard’  
-        set BelongsTo = %s 
-        where BreezecardNum = %s;
-        
-        Delete BreezecardNum from ‘cs4400_Group_14’.’Conflict’ 
-        where BreezecardNum = %s;
-                    '''
-        self.cursor.execute(sql, Username, cardSelected, cardSelected)
+        print(self.SuspCardListBox.gotClicked())
 
     def assignSuspCardOldOwner(self):
-        sql = '''Delete BreezecardNum from ‘cs4400_Group_14’.’Conflict’ 
-        where BreezecardNum = %s
-                '''
-        self.cursor.execute(sql, cardSelected)
+        print(self.SuspCardListBox.gotClicked())
 
     def adminCardMgt(self):
         #self.adminHomeWin.withdraw()
@@ -512,7 +551,7 @@ class MartaHack:
         b1 = Button(topF, text="Reset", bg=self.fgColor1, command=self.logIn)
         b1.grid(row=1, column=4, sticky=NSEW, pady=5, padx=5)
         b2 = Button(topF, text="Update Filter", bg=self.fgColor1, command=self.tripHist)
-        b2.grid(row=3, column=4, sticky=NSEW, pady=5, padx=5)
+        b2.grid(row=2, column=4, sticky=NSEW, pady=5, padx=5)
         self.v = StringVar()
         self.v.set("False")
         rb1 = Radiobutton(topF, text="Show Suspended Cards", variable=self.v, value="True", bg=self.fgColor1)
@@ -576,9 +615,9 @@ class MartaHack:
     def pFlowUpdate(self):
         # CHECK FOR VALID DATETIMES
         data = self.pFlowQuery()
-        del self.pFlowListBox
         header = ["Station Name", "Passengers In", "Pasengers Out", "Flow", "Revenue"]
-        #print(data)
+        for item in self.pFlowContainer.grid_slaves():
+            item.destroy()
         self.pFlowListBox = MultiColumnListbox(self.pFlowContainer,header,data)
         # POPULATE TABLE WITH VALUES
 
@@ -626,13 +665,10 @@ class MartaHack:
         except:
             messagebox.showerror("Incorrect formatting", "Incorrect starttime/endtime formats. Please enter as yyyy-mm-dd hh:mm:ss")
 
-    def goToAdminHome(self):
-        pass
-
     def cardMgt(self):
-        self.passHomeWin.withdraw()
+        #self.passHomeWin.withdraw()
         self.passCardWin = Toplevel()
-        self.passCardWin.protocol("WM_DELETE_WINDOW", self.endProgram)
+        #self.passCardWin.protocol("WM_DELETE_WINDOW", self.endProgram)
         self.passCardWin.title("Manage Cards")
         self.passCardWin.configure(bg=self.bgColor1)
 
@@ -666,27 +702,28 @@ class MartaHack:
 
         b2 = Button(botF, text="Add Value", bg=self.bgColor1, command=self.addValue)
         b2.grid(row=3, column=2, sticky=NSEW, pady=5, padx=5)
-        b3 = Button(topF, text="Delete Selected Card", bg=self.bgColor1, command=self.deleteCard)
-        b3.grid(row=0, column=3, sticky=NSEW, pady=5, padx=5)
 
     def deleteCard(self):
-        sql = ''' Delete BelongsTo from ‘cs4400_Group_14’.’Breezecard’ 
-        where BreezecardNum = %s; 
+        sql = ''' Delete BelongsTo from ‘cs4400_Group_14’.’Breezecard’
+        where BreezecardNum = %s;
         '''
         self.cursor.execute(sql,cardSelected)
+        self.db.commit()
 
     def addValue(self):
-        sql = '''Update ‘cs4400_Group_14’.’Breezecard’  
-            set Value = %s 
+        sql = '''Update ‘cs4400_Group_14’.’Breezecard’
+            set Value = %s
             where BreezeCardNum = %s;
             '''
         self.cursor.execute(sql, valueNew, cardSelected)
+        self.db.commit()
 
     def addCard(self):
-        sql = '''Insert into ‘cs4400_Group_14’.’Breezecard’ (‘BreezecardNum’, ‘Value’, ‘BelongsTo’) 
+        sql = '''Insert into ‘cs4400_Group_14’.’Breezecard’ (‘BreezecardNum’, ‘Value’, ‘BelongsTo’)
         values (%s, 0, %s);
         '''
         self.cursor.execute(sql, BreezeCardNum, Username)
+        self.db.commit()
 
     def tripHist(self):
         self.passHomeWin.withdraw()
@@ -770,7 +807,6 @@ class MartaHack:
             pass
         # CLOSE EVERY WIN IN A SEPERATE TRY STATEMENT
         self.homeWin.destroy()
-
 
 win = Tk()
 MartaHack(win)
