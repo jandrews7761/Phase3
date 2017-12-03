@@ -284,7 +284,7 @@ class MartaHack:
         # buttons to call self.adminStationMgt, self.adminSuspMgt,
             # self.adminCardMgt,self.pflowReport, self.logOut
         self.adminHomeWin = Toplevel()
-        self.adminHomeWin.title("Administer Home")
+        self.adminHomeWin.title("Administrator Home")
 
         b1 = Button(self.adminHomeWin,text="Passenger Flow Report", command = self.pFlowReport,bg=self.fgColor1)
         b1.pack()
@@ -294,6 +294,9 @@ class MartaHack:
 
         b3 = Button(self.adminHomeWin,text= "Breeze Card Management", command = self.adminCardMgt,bg=self.fgColor1)
         b3.pack()
+
+        b4 = Button(self.adminHomeWin,text="Station Management", command = self.adminStationMgt,bg=self.fgColor1)
+        b4.pack()
 
     def passHome(self):
         # buttons to call self.cardMgt, self.tripHist, self.logOut
@@ -353,13 +356,29 @@ class MartaHack:
     def adminStationMgt(self):
         # withdraw adminHome?? and then build new window
         # buttons to call self.viewStation, self.createStation
-        pass
+        self.adminHomeWin.withdraw()
+        self.aStatMgtWin = Toplevel()
+        self.aStatMgtWin.protocol("WM_DELETE_WINDOW", self.endProgram)
+        self.aStatMgtWin.title("Welcome to MARTA")
+        self.aStatMgtWin.configure(bg=self.bgColor1)
+        topF = Frame(self.aStatMgtWin, bg=self.bgColor1)
+        topF.grid(row=0, column=0, pady=15, padx=10)
+        header = ["Station Name", "Stop ID", "Fare", "Status"]
+        data = [("Marta 1","1234","$3.50","Open"),
+                ("Marta 2","5678","$2.50","Closed")]
+        self.stationMgtListBox = MultiColumnListbox(topF,header,data)
+        botF = Frame(self.aStatMgtWin, bg=self.bgColor1)
+        botF.grid(row=1, column=0, pady=15, padx=10)
+        b1 = Button(botF, text="View Station", bg=self.fgColor1, command=self.viewStation)
+        b1.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5)
+        b2 = Button(botF, text="Create New Station", bg=self.fgColor1, command=self.createStation)
+        b2.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
 
     def viewStation(self):
-        pass
+        print(self.stationMgtListBox.gotClicked())
 
     def createStation(self):
-        pass
+        print(self.stationMgtListBox.gotClicked())
 
     def adminSuspMgt(self):
         self.adminHomeWin.withdraw()
@@ -437,11 +456,11 @@ class MartaHack:
         b3.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5)
         b4 = Button(botF, text="Set Value of Selected Card", bg=self.bgColor1, command=self.tripHist)
         b4.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
-
+        header = ["Card #", "New Owner", "Date Suspended", "Previous owner"]
         data = [("34567890", "Conn Man", "6/5/3", "Avery"),
                 ("3456789", "Moo Daddy", "56/78/92", "Moo Son")]
         self.AdminCardListBox = MultiColumnListbox(topF, header, data)
-
+        
     def pFlowReport(self):
         self.adminHomeWin.withdraw()
         self.pFlowWin=Toplevel()
@@ -522,6 +541,7 @@ class MartaHack:
 
         topF = Frame(self.passCardWin, bg=self.bgColor1)
         topF.grid(row=0, column=0, pady=15, padx=10)
+        header = ["Card #", "New Owner", "Date Suspended", "Previous owner"]
         data = [("34567890", "Conn Man", "6/5/3", "Avery"),
                 ("3456789", "Moo Daddy", "56/78/92", "Moo Son")]
         self.PassCardListBox = MultiColumnListbox(topF, header, data)
@@ -584,10 +604,10 @@ class MartaHack:
 
         botF = Frame(self.tripHistWin, bg=self.bgColor1)
         botF.grid(row=1, column=0, pady=15, padx=10)
+        header = ["Card #", "New Owner", "Date Suspended", "Previous owner"]
         data = [("34567890", "Conn Man", "6/5/3", "Avery"),
                 ("3456789", "Moo Daddy", "56/78/92", "Moo Son")]
         self.TripHistListBox = MultiColumnListbox(topF, header, data)
-
 
     def tripHistQuery(self):
         sql = '''SELECT
