@@ -484,8 +484,8 @@ class MartaHack:
         l1.grid(row=0, column=0, sticky=NSEW, pady=5, padx=5)
         l2 = Label(topF, text="Card Number", bg=self.bgColor1)
         l2.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
-        #e1 = Entry(topF)
-        #e1.grid(row=0, column=1, sticky=NSEW, pady=5, padx=5)
+        e1 = Entry(topF)
+        e1.grid(row=0, column=1, sticky=NSEW, pady=5, padx=5)
         e2 = Entry(topF)
         e2.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5)
         l3 = Label(topF, text="Value between", bg=self.bgColor1)
@@ -498,18 +498,18 @@ class MartaHack:
         e4.grid(row=3, column=3, sticky=NSEW, pady=5, padx=5)
 
         rightF = Frame(self.aCardWin, bg=self.bgColor1)
-        rightF.grid(row=0, column=2, pady=15, padx=10)
-        b1 = Button(rightF, text="Reset", bg=self.fgColor1, command=self.logIn)
-        b1.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5)
-        b2 = Button(rightF, text="Update Filter", bg=self.fgColor1, command=self.tripHist)
-        b2.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
+        rightF.grid(row=1, column=0, pady=15, padx=10)
+        b1 = Button(topF, text="Reset", bg=self.fgColor1, command=self.logIn)
+        b1.grid(row=1, column=4, sticky=NSEW, pady=5, padx=5)
+        b2 = Button(topF, text="Update Filter", bg=self.fgColor1, command=self.tripHist)
+        b2.grid(row=2, column=4, sticky=NSEW, pady=5, padx=5)
         self.v = StringVar()
         self.v.set("False")
-        rb1 = Radiobutton(rightF, text="Show Suspended Cards", variable=self.v, value="True", bg=self.fgColor1)
-        rb1.grid(row=0, column=0, columnspan=2, pady=5, padx=5, sticky=NSEW)
+        rb1 = Radiobutton(topF, text="Show Suspended Cards", variable=self.v, value="True", bg=self.fgColor1)
+        rb1.grid(row=0, column=4, columnspan=1, pady=5, padx=5, sticky=NSEW)
 
         botF = Frame(self.aCardWin, bg=self.bgColor1)
-        botF.grid(row=1, column=0, pady=15, padx=10)
+        botF.grid(row=2, column=0, pady=15, padx=10)
         e5 = Entry(botF)
         e5.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
         e6 = Entry(botF)
@@ -521,7 +521,7 @@ class MartaHack:
         header = ["Card #", "New Owner", "Date Suspended", "Previous owner"]
         data = [("34567890", "Conn Man", "6/5/3", "Avery"),
                 ("3456789", "Moo Daddy", "56/78/92", "Moo Son")]
-        self.AdminCardListBox = MultiColumnListbox(topF, header, data)
+        self.AdminCardListBox = MultiColumnListbox(rightF, header, data)
 
     def pFlowReport(self):
         #self.adminHomeWin.withdraw()
