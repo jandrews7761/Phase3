@@ -14,6 +14,10 @@ marta_list = [("Time", "Source", "Destination", "Fare", "Card #")]
 
 # THINGS TO DO: registerNewUser method needs to suspend buzzcards if new user
 # has an old buzzcard
+# more db.commit()
+# create new station
+# fix viewStation sql capability
+# z fix viewStation -fare
 
 class MultiColumnListbox(object):
 
@@ -283,20 +287,24 @@ class MartaHack:
         # create adminHome page
         # buttons to call self.adminStationMgt, self.adminSuspMgt,
             # self.adminCardMgt,self.pflowReport, self.logOut
-        self.adminHomeWin = Toplevel()
+        self.adminHomeWin = Toplevel(bg=self.bgColor1)
+        self.adminHomeWin.protocol("WM_DELETE_WINDOW",self.endProgram)
         self.adminHomeWin.title("Administrator Home")
 
         b1 = Button(self.adminHomeWin,text="Passenger Flow Report", command = self.pFlowReport,bg=self.fgColor1)
-        b1.pack()
+        b1.pack(padx=10,pady=5)
 
         b2 = Button(self.adminHomeWin,text="Suspended Cards", command=self.adminSuspMgt,bg=self.fgColor1)
-        b2.pack()
+        b2.pack(padx=10,pady=5)
 
         b3 = Button(self.adminHomeWin,text= "Breeze Card Management", command = self.adminCardMgt,bg=self.fgColor1)
-        b3.pack()
+        b3.pack(padx=10,pady=5)
 
         b4 = Button(self.adminHomeWin,text="Station Management", command = self.adminStationMgt,bg=self.fgColor1)
-        b4.pack()
+        b4.pack(padx=10,pady=5)
+
+        b5 = Button(self.adminHomeWin,text="Log Out", command= self.logOut, bg=self.fgColor1)
+        b5.pack(padx=10,pady=15)
 
     def passHome(self):
         # buttons to call self.cardMgt, self.tripHist, self.logOut
@@ -356,73 +364,191 @@ class MartaHack:
     def adminStationMgt(self):
         # withdraw adminHome?? and then build new window
         # buttons to call self.viewStation, self.createStation
-        self.adminHomeWin.withdraw()
+        #self.adminHomeWin.withdraw()
         self.aStatMgtWin = Toplevel()
-        self.aStatMgtWin.protocol("WM_DELETE_WINDOW", self.endProgram)
-        self.aStatMgtWin.title("Welcome to MARTA")
+        #self.aStatMgtWin.protocol("WM_DELETE_WINDOW", self.endProgram)
+        self.aStatMgtWin.title("Station Listing")
         self.aStatMgtWin.configure(bg=self.bgColor1)
         topF = Frame(self.aStatMgtWin, bg=self.bgColor1)
         topF.grid(row=0, column=0, pady=15, padx=10)
         header = ["Station Name", "Stop ID", "Fare", "Status"]
-        data = [("Marta 1","1234","$3.50","Open"),
-                ("Marta 2","5678","$2.50","Closed")]
+        data = self.adminStationMgtQuery()
         self.stationMgtListBox = MultiColumnListbox(topF,header,data)
         botF = Frame(self.aStatMgtWin, bg=self.bgColor1)
         botF.grid(row=1, column=0, pady=15, padx=10)
         b1 = Button(botF, text="View Station", bg=self.fgColor1, command=self.viewStation)
         b1.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5)
         b2 = Button(botF, text="Create New Station", bg=self.fgColor1, command=self.createStation)
-        b2.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
+        b2.grid(row=1, column=2, sticky=NSEW, pady=5, padx=5)
+        self.adminStatMgtTopF = topF
+
+    def adminStationMgtQuery(self):
+        sql = '''SELECT
+                    Name, stopID, EnterFare, ClosedStatus
+                FROM
+                    Station'''
+        self.cursor.execute(sql)
+        x = list(self.cursor.fetchall())
+        a = []
+        for item in x:
+            item = list(item)
+            if item[3] == 0:
+                item[3] = "Open"
+            else:
+                item[3] = "Closed"
+            item = tuple(item)
+            a.append(item)         
+        return a
 
     def viewStation(self):
         x = self.stationMgtListBox.gotClicked()
-        self.adminHomeWin.withdraw()
-        self.viewStationWin = Toplevel(width= 200, height=100)
-        self.viewStationWin.protocol("WM_DELETE_WINDOW", self.endProgram)
-        self.viewStationWin.title("Station Detail -" + x[0] )
-        self.viewStationWin.configure(bg=self.bgColor1)
-        viewS = Frame(self.viewStationWin, bg=self.bgColor1)
-        viewS.grid(row=0, column=0, pady=15, padx=10)
-        l1 = Label(viewS, text=x[0], bg=self.bgColor1)
-        l1.grid(row=0, column=0, sticky=NSEW, pady=5, padx=5)
-        l1.config(font = "bold 24")
-        l2 = Label(viewS, text= "Stop " + str(x[1]), bg=self.bgColor1, fg = "red")
-        l2.grid(row=0, column=2, sticky=NSEW, pady=5, padx=5)
-        l2.config(font = "16")
-        l3 = Label(viewS, text = "Fare" , bg=self.bgColor1)
-        l3.grid(row = 1, column = 0, pady=0, padx=0)
-        e1 = Entry(viewS)
-        e1.insert(0, '$')
+        print(x)
+        self.stopID = x[1]
+        sql = '''select Intersection from BusStationIntersection where StopID = %s'''
+        c = self.cursor.execute(sql,(x[1]))
+        if c >= 1:
+            intersection = list(self.cursor.fetchall())[0][0]
+        else:
+            intersection = "Not available for train stations"
+        try:
+            x[0]
+            failed = False
+        except:
+            failed = True
+            messagebox.showerror("No Selected Station", "Please select a station first")
+        if not failed:
+            self.viewStationWin = Toplevel(width= 200, height=100)
+            self.viewStationWin.title("Station Details -" + x[0])
+            self.viewStationWin.configure(bg=self.bgColor1)
+            titleF = Frame(self.viewStationWin,bg=self.bgColor1)
+            titleF.grid(row=0,column=0,padx=10)
+            viewS = Frame(self.viewStationWin, bg=self.bgColor1)
+            viewS.grid(row=1,column=0,pady=10,padx=10)
+            l1 = Label(titleF, text=x[0], bg=self.bgColor1)
+            l1.pack(side=LEFT,pady=20, padx=5)
+            l1.config(font = "bold 16")
+            l2 = Label(titleF, text= "Stop " + str(x[1]), bg=self.bgColor1)
+            l2.pack(side=RIGHT,padx=10, pady=20)
+            l2.config(font = "14")
+            l3 = Label(viewS, text = "Fare", bg=self.bgColor1, justify = LEFT)
+            l3.grid(row = 1, column = 0)
+            e1 = Entry(viewS)
+            e1.configure(width=10)
+            e1.insert(0, '$')
+            e1.insert(END, x[2])
+            e1.grid(row =1, column = 1)
+            e1.configure(width=8)
+            l4 = Label(viewS, text = "Nearest Intersection" , bg=self.bgColor1, justify = LEFT)
+            l4.grid(row = 2, column = 0, pady=10)
+            l4.config(font = "12")
+            l6 = Label(viewS, text = intersection, bg=self.bgColor1)
+            l6.grid(row=2, column = 1)
+            b1 = Button(viewS, text = "Update Fare", bg=self.bgColor1, justify = LEFT, command=self.updateFare)
+            b1.grid(row = 1, column = 2)
+            self.updateFare = e1
+            y = x[3]
+            self.varStat = StringVar()
+            self.varStat.set(y)
+            c = Checkbutton(viewS, text = "Open Station",bg=self.bgColor1, onvalue = "Open", offvalue = "Closed",variable = self.varStat, command = self.getVarStat)
+            c.grid(row=3, column=0)
+            l6 = Label(viewS, text = "When checked, passengers can enter at this station.", wraplength=250,bg=self.bgColor1)
+            l6.grid(row=4, column=0, columnspan = 3)
+            
+
+            #print(self.stationMgtListBox.gotClicked())
+            #self.aStatMgtWin.withdraw()
+    def updateStnMgtListBox(self):
+        for item in self.adminStatMgtTopF.grid_slaves():
+            item.destroy()
+        header = ["Station Name", "Stop ID", "Fare", "Status"]
+        data = self.adminStationMgtQuery()
+        self.stationMgtListBox = MultiColumnListbox(self.adminStatMgtTopF,header, data)
         
-        e1.grid(row =1, column = 1)
-        l4 = Label(viewS, text = "Nearest Intersection" , bg=self.bgColor1)
-        l4.grid(row = 2, column = 0, pady=10, padx=10)
-        l4.config(font = "12")
-        b1 = Button(viewS, text = "Update Fare", bg=self.fgColor1, command=self.updateFare)
-        b1.grid(row = 1, column = 2)
-        self.updateFare = e1
-
-        ##need something for nearest intersection to get to say what it is or if its a train station
-        self.varStat = IntVar()
-        print(self.varStat.get())
-        c = Checkbutton(viewS, text = "Open Station", variable = self.varStat, command = self.getVarStat)
-        c.grid(row=3, column=0)
-        l5 = Label(viewS, text = "When checked, passengers can enter at this station.", bg = self.bgColor1)
-        l5.grid(row=3, column =1)
-        l5.config(font = "10")
-
-
         
-        print(self.stationMgtListBox.gotClicked())
+        
 
     def getVarStat(self):
-        print(self.varStat.get())
-    def updateFare(self):
-        print(self.updateFare.get())
+        sql = '''UPDATE Station
+                    SET ClosedStatus = %s
+                    WHERE StopID = %s
+                    '''
+        if self.varStat.get() == "Open":
+            x = 0
+        else:
+            x = 1
         
+        self.cursor.execute(sql,(x,self.stopID))
+        self.db.commit()
+        self.updateStnMgtListBox()
+
+    def getVarStat2(self):
+        sql = ''''''
+        #sql insert
+        print(self.varStat2.get())
+
+    def updateFare(self):
+        x = self.updateFare.get()
+        x = x.strip('$')
+        sql = '''UPDATE Station
+                    SET EnterFare = %s
+                    WHERE StopID = %s'''
+        try:          
+            if float(x) > 50 or float(x) < 0:
+                messagebox.showerror('Fare Entry Incorrect', 'Your fare is not within the accepted range. Please enter a value between 0 and 50.')
+            else:
+                x = float(x)
+                x = '%.2f' % x
+                x = str(x)
+                self.cursor.execute(sql,(x,self.stopID))
+                self.db.commit()
+                self.updateStnMgtListBox()
+        except:
+            messagebox.showerror('Incorrect Value', 'Please enter a monetary value.')
 
     def createStation(self):
-        print(self.stationMgtListBox.gotClicked())
+        self.createStationWin = Toplevel(width= 200, height=100)
+        #self.viewStationWin.protocol("WM_DELETE_WINDOW", self.endProgram
+        self.createStationWin.title("Create New Station")
+        self.createStationWin.configure(bg=self.bgColor1)
+        createS = Frame(self.createStationWin, bg=self.bgColor1)
+        createS.grid(padx=10, row= 0, column=0)
+        l1 = Label(createS, text = "Station Name", bg = self.bgColor1)
+        l1.grid(row=0, column = 0,pady=5)
+        l2 = Label(createS, text = "Stop ID", bg = self.bgColor1)
+        l2.grid(row=1, column = 0,pady=5)
+        l3 = Label(createS, text = "Entry Fare", bg = self.bgColor1)
+        l3.grid(row=2, column = 0,pady=5)
+        sql = ''''''
+        #sql insert 
+        e1 = Entry(createS)
+        e1.grid(row=0, column =1)
+        e2 = Entry(createS)
+        e2.grid(row=1, column =1)
+        e3 = Entry(createS)
+        e3.insert(0,'$')
+        e3.grid(row=2, column =1)
+        self.v2 = StringVar()
+        self.v2.set("False")
+        l4 = Label(createS, text = "Station Type", bg = self.bgColor1)
+        l4.grid(row=3, column = 0, pady=5)
+        busS = Frame(createS, bg = self.bgColor1)
+        busS.grid(row=3, column =1)
+        rb1 = Radiobutton(busS,text="Bus Station",variable = self.v2, value = "False",bg=self.bgColor1)
+        rb1.grid(row=0,column = 1, columnspan=2,padx=5)
+        l5 = Label(busS,text= "Nearest Intersection",bg=self.bgColor1)
+        l5.grid(row=1,padx=5,column = 1, sticky=NSEW)
+        e5 = Entry(busS)
+        e5.grid(row=2,padx=5,column = 1, sticky=NSEW)
+        rb2 = Radiobutton(busS,text="Train Station",variable = self.v2,value = "True",bg=self.bgColor1)
+        rb2.grid(row=3,padx=5,column = 1, columnspan=2)
+        self.varStat2 = IntVar()
+        print(self.varStat2.get())
+        c = Checkbutton(createS, text = "Open Station",bg=self.bgColor1, variable = self.varStat2, command = self.getVarStat2)
+        c.grid(row=4, column=0, sticky = E)
+        l6 = Label(createS, text = "When checked, passengers can enter at this station.", wraplength=250,bg=self.bgColor1)
+        l6.grid(row=5, column=0, columnspan = 2)
+        print(self.v2.get())
+        
 
     def adminSuspMgt(self):
         self.adminHomeWin.withdraw()
@@ -478,7 +604,6 @@ class MartaHack:
         e4 = Entry(topF)
         e4.grid(row=3, column=3, sticky=NSEW, pady=5, padx=5)
 
-
         rightF = Frame(self.aCardWin, bg=self.bgColor1)
         rightF.grid(row=0, column=2, pady=15, padx=10)
         b1 = Button(rightF, text="Reset", bg=self.fgColor1, command=self.logIn)
@@ -504,12 +629,12 @@ class MartaHack:
         data = [("34567890", "Conn Man", "6/5/3", "Avery"),
                 ("3456789", "Moo Daddy", "56/78/92", "Moo Son")]
         self.AdminCardListBox = MultiColumnListbox(topF, header, data)
-        
+
     def pFlowReport(self):
-        self.adminHomeWin.withdraw()
+        #self.adminHomeWin.withdraw()
         self.pFlowWin=Toplevel()
         self.pFlowWin.title("Passenger Flow Report")
-        self.pFlowWin.protocol("WM_DELETE_WINDOW",self.endProgram)
+        #self.pFlowWin.protocol("WM_DELETE_WINDOW",self.endProgram)
         self.pFlowWin.configure(bg=self.bgColor1)
 
         topF = Frame(self.pFlowWin,bg = self.bgColor1)
@@ -531,6 +656,10 @@ class MartaHack:
         b2.grid(row=1,column=3,rowspan=2,pady=5,padx=10,sticky=EW)
         b3 = Button(topF,text="Home",bg=self.fgColor1, command= self.goToAdminHome, width=8)
         b3.grid(row=1,column=4,rowspan=2,pady=5,padx=10,sticky=EW)
+
+        data = []
+        header = ["Station Name", "Passengers In", "Pasengers Out", "Flow", "Revenue"]
+        pFlowListBox = MultiColumnListbox(botF,header,data)
 
         self.startTimeE = e1
         self.endTimeE = e2
@@ -570,14 +699,11 @@ class MartaHack:
                     trip.startTime >= %s
                         AND trip.startTime <= %s
                 GROUP BY StationName'''
-        c = cursor.execute(sql,(self.startTimeE.get(), self.endTimeE.get(), self.startTimeE.get(), self.endTimeE.get()))
-        return list(cursor.fetchall())
-
-    def goToAdminHome(self):
-        pass
+        c = self.cursor.execute(sql,(self.startTimeE.get(), self.endTimeE.get(), self.startTimeE.get(), self.endTimeE.get()))
+        return list(self.cursor.fetchall())
 
     def cardMgt(self):
-        self.passHomeWin.withdraw()
+        sself.passHomeWin.withdraw()
         self.passCardWin = Toplevel()
         self.passCardWin.protocol("WM_DELETE_WINDOW", self.endProgram)
         self.passCardWin.title("Manage Cards")
@@ -589,7 +715,6 @@ class MartaHack:
         data = [("34567890", "Conn Man", "6/5/3", "Avery"),
                 ("3456789", "Moo Daddy", "56/78/92", "Moo Son")]
         self.PassCardListBox = MultiColumnListbox(topF, header, data)
-
 
         e1 = Entry(topF)
         e1.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
@@ -686,7 +811,10 @@ class MartaHack:
                 ORDER BY startTime DESC'''
 
     def logOut(self):
-        pass
+        self.endProgram()
+        homeWin = Tk()
+        self.__init__(homeWin)
+        homeWin.mainloop()
         # must destroy all windows (a bunch of try excepts)
         # make logIn reappear
 
@@ -695,6 +823,7 @@ class MartaHack:
             self.cursor.close()
             self.db.commit()
             self.db.close()
+            print("successfully closed like everything")
         except:
             pass
         # CLOSE EVERY WIN IN A SEPERATE TRY STATEMENT
