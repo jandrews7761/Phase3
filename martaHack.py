@@ -20,7 +20,6 @@ marta_list = [("Time", "Source", "Destination", "Fare", "Card #")]
 # z fix viewStation -fare
 
 class MultiColumnListbox(object):
-
     def __init__(self,frame,car_header,car_list):
         self.car_header = car_header
         self.car_list = car_list
@@ -46,7 +45,6 @@ class MultiColumnListbox(object):
         container.grid_columnconfigure(0, weight=1)
         container.grid_rowconfigure(0, weight=1)
 
-
     def _build_tree(self):
         for col in self.car_header:
             self.tree.heading(col, text=col.title(),
@@ -60,8 +58,6 @@ class MultiColumnListbox(object):
                 col_w = tkFont.Font().measure(val)
                 if self.tree.column(self.car_header[ix],width=None)<col_w:
                     self.tree.column(self.car_header[ix], width=col_w)
-
-
 
     def sortby(self,tree, col, descending):
         """sort tree contents when a column header is clicked on"""
@@ -549,15 +545,17 @@ class MartaHack:
         b1.grid(row=1,column=2,rowspan=2,pady=5,padx=10,sticky=EW)
         b2 = Button(topF,text="Revert",bg=self.fgColor1, command=self.pFlowRevert, width=8)
         b2.grid(row=1,column=3,rowspan=2,pady=5,padx=10,sticky=EW)
-        b3 = Button(topF,text="Home",bg=self.fgColor1, command= self.goToAdminHome, width=8)
-        b3.grid(row=1,column=4,rowspan=2,pady=5,padx=10,sticky=EW)
-
-        data = []
-        header = ["Station Name", "Passengers In", "Pasengers Out", "Flow", "Revenue"]
-        pFlowListBox = MultiColumnListbox(botF,header,data)
+        #b3 = Button(topF,text="Home",bg=self.fgColor1, command= self.goToAdminHome, width=8)
+        #b3.grid(row=1,column=4,rowspan=2,pady=5,padx=10,sticky=EW)
 
         self.startTimeE = e1
         self.endTimeE = e2
+        botF = Frame(self.pFlowWin)
+        botF.grid(row=1,pady=15,padx=10)
+        data = self.pFlowQuery()
+        header = ["Station Name", "Passengers In", "Pasengers Out", "Flow", "Revenue"]
+        self.pFlowListBox = MultiColumnListbox(botF,header,data)
+        self.pFlowContainer = botF
 
     def pFlowRevert(self):
         self.pFlowWin.destroy()
@@ -566,6 +564,10 @@ class MartaHack:
     def pFlowUpdate(self):
         # CHECK FOR VALID DATETIMES
         data = self.pFlowQuery()
+        del self.pFlowListBox
+        header = ["Station Name", "Passengers In", "Pasengers Out", "Flow", "Revenue"]
+        #print(data)
+        self.pFlowListBox = MultiColumnListbox(self.pFlowContainer,header,data)
         # POPULATE TABLE WITH VALUES
 
     def pFlowQuery(self):
@@ -573,7 +575,7 @@ class MartaHack:
                     t1.statName AS StationName,
                     t1.flowOut AS flowOut,
                     COUNT(Trip.BreezeCardNum) AS flowIn,
-                    COUNT(trip.breezecardNum) - t1.flowOut AS flow,
+                    COUNT(Trip.breezecardNum) - t1.flowOut AS flow,
                     t1.revenue
                 FROM
                     (SELECT
@@ -585,17 +587,31 @@ class MartaHack:
                         Station
                     INNER JOIN Trip ON Station.StopID = Trip.StartsAt
                     WHERE
-                        trip.startTime >= %s
-                            AND trip.startTime <= %s
+                        Trip.startTime >= %s
+                            AND Trip.startTime <= %s
                     GROUP BY Trip.StartsAt) AS t1
                         INNER JOIN
-                    trip ON t1.startID = trip.endsAt
+                    Trip ON t1.startID = Trip.endsAt
                 WHERE
-                    trip.startTime >= %s
-                        AND trip.startTime <= %s
+                    Trip.startTime >= %s
+                        AND Trip.startTime <= %s
                 GROUP BY StationName'''
-        c = self.cursor.execute(sql,(self.startTimeE.get(), self.endTimeE.get(), self.startTimeE.get(), self.endTimeE.get()))
-        return list(self.cursor.fetchall())
+        if self.startTimeE.get() == "" or not match("(\d{4})-(\d{2})-(\d{2})(\d{2}):(\d{2}):(\d{2})",self.startTimeE.get()):
+            startTime = "1970-01-01 1:00:00"
+        else:
+            startTime = self.startTimeE.get()
+        if self.endTimeE.get() == "" or not     match("(\d{4})-(\d{2})-(\d{2})(\d{2}):(\d{2}):(\d{2})",self.endTimeE.get()):
+            endTime = "2025-01-01 12:00:00"
+        else:
+            endTime = self.endTimeE.get()
+
+        if not match("(\d{4})-(\d{2})-(\d{2})(\d{2}):(\d{2}):(\d{2})",self.startTimeE.get()) or not match("(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})",self.endTimeE.get()):
+            messagebox.showerror("Incorrect formatting", "Incorrect starttime/endtime formats. Please enter as yyyy-mm-dd hh:mm:ss. Currently displaying all data")
+        try:
+            c = self.cursor.execute(sql,(startTime, endTime, startTime, endTime))
+            return list(self.cursor.fetchall())
+        except:
+            messagebox.showerror("Incorrect formatting", "Incorrect starttime/endtime formats. Please enter as yyyy-mm-dd hh:mm:ss")
 
     def goToAdminHome(self):
         pass
