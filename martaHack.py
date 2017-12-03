@@ -9,9 +9,6 @@ import csv
 import random
 from re import match
 
-marta_header = ["Time", "Source", "Destination", "Fare", "Card #"]
-marta_list = [("Time", "Source", "Destination", "Fare", "Card #")]
-
 # THINGS TO DO:
 # registerNewUser method needs to suspend buzzcards if new user has an old  #
 ## buzzcard
@@ -285,6 +282,8 @@ class MartaHack:
         else:
             return self.autoGenerate()
 
+    ############# ADMIN STUFF STARTS HERE ################
+
     def adminHome(self):
         # create adminHome page
         # buttons to call self.adminStationMgt, self.adminSuspMgt,
@@ -307,106 +306,6 @@ class MartaHack:
 
         b5 = Button(self.adminHomeWin,text="Log Out", command= self.logOut, bg=self.fgColor1)
         b5.pack(padx=10,pady=15)
-
-    def passHome(self):
-        # buttons to call self.cardMgt, self.tripHist, self.logOut
-        self.homeWin.withdraw()
-        self.passHomeWin = Toplevel()
-        self.passHomeWin.protocol("WM_DELETE_WINDOW", self.endProgram)
-        self.passHomeWin.title("Welcome to MARTA")
-        self.passHomeWin.configure(bg=self.bgColor1)
-
-        topF = Frame(self.passHomeWin, bg=self.bgColor1)
-        topF.grid(row=0, column=0, pady=15, padx=10)
-        l1 = Label(topF, text="Breeze Card", bg=self.bgColor1)
-        l1.grid(row=0, column=0, sticky=NSEW, pady=5, padx=5)
-        l2 = Button(topF, text="Manage Cards", bg=self.fgColor1, command=self.cardMgt)
-        l2.grid(row=0, column=2, sticky=NSEW, pady=5, padx=5)
-        l3 = Label(topF, text="Balance", bg=self.bgColor1)
-        l3.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
-
-        #root = Tk()
-        self.bCardNumvar = StringVar()
-        # choices : Fill with sql query for breezecards)
-        choices = tuple(self.passHomeQuery())
-        self.bCardNumvar.set(choices[0])
-        e1 = Entry(topF)
-        e1.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5)
-        e2 = OptionMenu(topF, self.bCardNumvar, *choices,command=self.changeCardSelect)
-        e2.grid(row=0, column=1, sticky=NSEW, pady=5, padx=5)
-        def change_dropdown(*args):
-            print(self.bCardNumvar.get())
-        self.bCardNumvar.trace('w', change_dropdown)
-
-        l4 = Label(topF, text="Start at", bg=self.bgColor1)
-        l4.grid(row=2, column=0, sticky=NSEW, pady=5, padx=5)
-        self.startB = Button(topF, text="Start Trip", bg=self.fgColor1, command=self.startTrip)
-        self.startB.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
-        l6 = Label(topF, text="Ending at", bg=self.bgColor1)
-        l6.grid(row=3, column=0, sticky=NSEW, pady=5, padx=5)
-        l7 = Label(topF, text="End Trip", bg=self.bgColor1)
-        l7.grid(row=3, column=2, sticky=NSEW, pady=5, padx=5)
-        e3 = Entry(topF)
-        e3.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
-        e4 = Entry(topF)
-        e4.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
-
-        botF = Frame(self.passHomeWin, bg=self.bgColor1)
-        botF.grid(row=1, column=0, pady=15, padx=10)
-        self.endStation = StringVar()
-        self.endStation.set("False")
-
-        l8 = Button(botF, text="View Trip History", bg=self.fgColor1, command = self.tripHist)
-        l8.grid(row=1, column=0, pady=5, padx=5, sticky=NSEW)
-        l9 = Label(botF, text="", bg=self.bgColor1)
-        l9.grid(row=1, column=1, pady=5, padx=5, sticky=NSEW)
-        l10 = Button(botF, text="Log Out", bg=self.fgColor1,command=self.logOut)
-        l10.grid(row=1, column=2, pady=5, padx=5, sticky=NSEW)
-
-        self.passHomeTopF = topF
-        self.changeCardSelect(choices[0])
-
-    def passHomeQuery(self):
-        sql = '''SELECT
-                    BreezecardNum
-                FROM
-                    Breezecard
-                WHERE
-                    BelongsTo LIKE %s
-                        AND BreezecardNum NOT IN (SELECT
-                            Breezecard.BreezecardNum
-                        FROM
-                            Breezecard
-                                JOIN
-                            Conflict ON Breezecard.BreezecardNum = Conflict.BreezecardNum)'''
-        self.cursor.execute(sql,(self.username))
-        data = list(self.cursor.fetchall())
-        print(data)
-        return data
-
-    def changeCardSelect(self,newCard):
-        print("a new card has been selected!")
-        sql = '''select * from Trip where BreezecardNum = %s and EndsAt is null'''
-        print("newCard is", newCard[0])
-        c = self.cursor.execute(sql,(newCard[0]))
-        print(c)
-        if c>=1:
-            try:
-                self.startB.destroy()
-            except:
-                pass
-            self.inProgressLabel = Label(self.passHomeTopF,text= "Trip in Progress", bg=self.bgColor1)
-            self.inProgressLabel.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
-        else:
-            try:
-                self.inProgressLabel.destroy()
-            except:
-                pass
-            self.startB = Button(self.passHomeTopF, text="Start Trip", bg=self.fgColor1, command=self.startTrip)
-            self.startB.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
-
-    def startTrip(self):
-        pass
 
     def adminStationMgt(self):
         # withdraw adminHome?? and then build new window
@@ -515,17 +414,16 @@ class MartaHack:
         l1.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
 
     def assignSuspCardNewOwner(self):
-        sql = """Update ‘cs4400_Group_14’.’Breezecard’  
+        sql = """Update ‘cs4400_Group_14’.’Breezecard’
         set BelongsTo = Username where BreezecardNum = %s;
-
-        Delete BreezecardNum from ‘cs4400_Group_14’.’Conflict’ 
+        Delete BreezecardNum from ‘cs4400_Group_14’.’Conflict’
         where BreezecardNum = %s;
         """
 
         self.cursor.execute(sql, cardSelected, cardSelected)
 
     def assignSuspCardOldOwner(self):
-        sql = """Delete BreezecardNum from ‘cs4400_Group_14’.’Conflict’ 
+        sql = """Delete BreezecardNum from ‘cs4400_Group_14’.’Conflict’
         where BreezecardNum = %s;
         """
 
@@ -679,6 +577,121 @@ class MartaHack:
             return list(self.cursor.fetchall())
         except:
             messagebox.showerror("Incorrect formatting", "Incorrect starttime/endtime formats. Please enter as yyyy-mm-dd hh:mm:ss")
+
+    ################ PASSENGER STUFF FROM HERE ON ###############
+
+    def passHome(self):
+        # buttons to call self.cardMgt, self.tripHist, self.logOut
+        self.homeWin.withdraw()
+        self.passHomeWin = Toplevel()
+        self.passHomeWin.protocol("WM_DELETE_WINDOW", self.endProgram)
+        self.passHomeWin.title("Welcome to MARTA")
+        self.passHomeWin.configure(bg=self.bgColor1)
+
+        topF = Frame(self.passHomeWin, bg=self.bgColor1)
+        topF.grid(row=0, column=0, pady=15, padx=10)
+        l1 = Label(topF, text="Breeze Card", bg=self.bgColor1)
+        l1.grid(row=0, column=0, sticky=NSEW, pady=5, padx=5)
+        l2 = Button(topF, text="Manage Cards", bg=self.fgColor1, command=self.cardMgt)
+        l2.grid(row=0, column=2, sticky=NSEW, pady=5, padx=5)
+        l3 = Label(topF, text="Balance", bg=self.bgColor1)
+        l3.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
+
+        #root = Tk()
+        self.bCardNumvar = StringVar()
+        # choices : Fill with sql query for breezecards)
+        choices = tuple(self.passHomeQuery())
+        self.bCardNumvar.set(choices[0])
+        self.bzValLabel = Label(topF,text="$",bg=self.bgColor1,justify=LEFT,anchor='w')
+        self.bzValLabel.grid(row=1, column=1, pady=5, padx=5,sticky=NSEW)
+        e2 = OptionMenu(topF, self.bCardNumvar, *choices,command=self.changeCardSelect)
+        e2.grid(row=0, column=1, sticky=NSEW, pady=5, padx=5)
+        def change_dropdown(*args):
+            print(self.bCardNumvar.get())
+        self.bCardNumvar.trace('w', change_dropdown)
+
+        l4 = Label(topF, text="Start at", bg=self.bgColor1)
+        l4.grid(row=2, column=0, sticky=NSEW, pady=5, padx=5)
+        self.startB = Button(topF, text="Start Trip", bg=self.fgColor1, command=self.startTrip)
+        self.startB.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
+        l6 = Label(topF, text="Ending at", bg=self.bgColor1)
+        l6.grid(row=3, column=0, sticky=NSEW, pady=5, padx=5)
+        self.endB = Button(topF, text="End Trip", bg=self.fgColor1, command=self.endTrip)
+        self.endB.grid(row=3, column=2, sticky=NSEW, pady=5, padx=5)
+        e3 = Entry(topF)
+        e3.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
+        e4 = Entry(topF)
+        e4.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
+
+        botF = Frame(self.passHomeWin, bg=self.bgColor1)
+        botF.grid(row=1, column=0, pady=15, padx=10)
+        self.endStation = StringVar()
+        self.endStation.set("False")
+
+        l8 = Button(botF, text="View Trip History", bg=self.fgColor1, command = self.tripHist)
+        l8.grid(row=1, column=0, pady=5, padx=5, sticky=NSEW)
+        l9 = Label(botF, text="", bg=self.bgColor1)
+        l9.grid(row=1, column=1, pady=5, padx=5, sticky=NSEW)
+        l10 = Button(botF, text="Log Out", bg=self.fgColor1,command=self.logOut)
+        l10.grid(row=1, column=2, pady=5, padx=5, sticky=NSEW)
+
+        self.passHomeTopF = topF
+        print(choices[0])
+        self.changeCardSelect(choices[0])
+
+    def passHomeQuery(self):
+        sql = '''SELECT
+                    BreezecardNum
+                FROM
+                    Breezecard
+                WHERE
+                    BelongsTo LIKE %s
+                        AND BreezecardNum NOT IN (SELECT
+                            Breezecard.BreezecardNum
+                        FROM
+                            Breezecard
+                                JOIN
+                            Conflict ON Breezecard.BreezecardNum = Conflict.BreezecardNum)'''
+        self.cursor.execute(sql,(self.username))
+        data = list(self.cursor.fetchall())
+        print(data)
+        return data
+
+    def changeCardSelect(self,newCard):
+        #print("a new card has been selected!")
+        sql = '''select value from Breezecard where BreezecardNum = %s'''
+        c = self.cursor.execute(sql,(newCard[0]))
+        bzVal = self.cursor.fetchall()[0][0]
+        self.bzValLabel.config(text=("$ " + str(bzVal)))
+        sql = '''select * from Trip where BreezecardNum = %s and EndsAt is null'''
+        #print("newCard is", newCard[0])
+        c = self.cursor.execute(sql,(newCard[0]))
+        #print(c)
+        ### RUN SQL TO CHECK IF TRIP CAN BE STARTED FROM VALUE OF Card
+        ### RUN SQL TO FIND WHAT STATIONS THE TRIP CAN BE ENDED AT AND POPULATE THE OPTION MENU WITH IT
+        if c>=1:
+            try:
+                self.startB.destroy()
+            except:
+                pass
+            self.inProgressLabel = Label(self.passHomeTopF,text= "Trip in Progress", bg=self.bgColor1)
+            self.inProgressLabel.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
+            self.endB.config(state="normal")
+        else:
+            try:
+                self.inProgressLabel.destroy()
+            except:
+                pass
+            self.startB = Button(self.passHomeTopF, text="Start Trip", bg=self.fgColor1, command=self.startTrip)
+            self.startB.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
+            ## IF BALANCE NOT ENOUGH TO START, DISABLE BUTTON
+            self.endB.config(state=DISABLED)
+
+    def startTrip(self):
+        pass
+
+    def endTrip(self):
+        pass
 
     def cardMgt(self):
         #self.passHomeWin.withdraw()
