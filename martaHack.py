@@ -688,13 +688,15 @@ class MartaHack:
                 ("3456789", "Moo Daddy", "56/78/92", "Moo Son")]
         self.PassCardListBox = MultiColumnListbox(topF, header, data)
 
-        e1 = Entry(topF)
-        e1.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
-        b1 = Button(topF, text="Add Card", bg=self.bgColor1, command=self.addCard)
-        b1.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5)
+        midF = Frame(self.passCardWin, bg=self.bgColor1)
+        midF.grid(row=2, column=0, pady=5, padx=10)
+        e1 = Entry(midF)
+        e1.grid(row=0, column=0, sticky=NSEW, pady=5, padx=5)
+        b1 = Button(midF, text="Add Card", bg=self.bgColor1, command=self.addCard)
+        b1.grid(row=0, column=1, sticky=NSEW, pady=5, padx=5)
 
         botF = Frame(self.passCardWin, bg=self.bgColor1)
-        botF.grid(row=2, column=0, pady=15, padx=10)
+        botF.grid(row=3, column=0, pady=15, padx=10)
 
         l1 = Label(botF, text="Add Value to Selected Card", bg=self.bgColor1)
         l1.grid(row=0, column=1, sticky=NSEW, pady=5, padx=5)
