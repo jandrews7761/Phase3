@@ -481,11 +481,6 @@ class MartaHack:
         self.db.commit()
         self.updateStnMgtListBox()
 
-    def getVarStat2(self):
-        sql = ''''''
-        #sql insert
-        print(self.varStat2.get())
-
     def updateFare(self):
         x = self.updateFare.get()
         x = x.strip('$')
@@ -518,7 +513,6 @@ class MartaHack:
         l2.grid(row=1, column = 0,pady=5)
         l3 = Label(createS, text = "Entry Fare", bg = self.bgColor1)
         l3.grid(row=2, column = 0,pady=5)
-        sql = ''''''
         #sql insert 
         e1 = Entry(createS)
         e1.grid(row=0, column =1)
@@ -542,13 +536,75 @@ class MartaHack:
         rb2 = Radiobutton(busS,text="Train Station",variable = self.v2,value = "True",bg=self.bgColor1)
         rb2.grid(row=3,padx=5,column = 1, columnspan=2)
         self.varStat2 = IntVar()
-        print(self.varStat2.get())
-        c = Checkbutton(createS, text = "Open Station",bg=self.bgColor1, variable = self.varStat2, command = self.getVarStat2)
+        c = Checkbutton(createS, text = "Open Station",bg=self.bgColor1, variable = self.varStat2)
         c.grid(row=4, column=0, sticky = E)
         l6 = Label(createS, text = "When checked, passengers can enter at this station.", wraplength=250,bg=self.bgColor1)
         l6.grid(row=5, column=0, columnspan = 2)
-        print(self.v2.get())
+        self.newStopID = e2
+        self.newStopName = e1
+        self.newStopFare = e3
+        self.nearestIntersection = e5
+        b1 = Button(createS, text="Create Station", bg=self.fgColor1, command=self.createNewStation)
+        b1.grid(row=6, column=1, sticky=NSEW, pady=5, padx=5)
         
+        
+                
+        
+    def createNewStation(self):
+        failed = False
+        stopID = self.newStopID.get()
+        if self.newStopID.get() == "":
+            failed = True
+            messagebox.showerror("No Stop ID Provided","Enter a Stop ID")
+        sqlfun = '''SELECT StopID from Station WHERE StopID = %s'''
+        if self.newStopName.get() == "":
+            failed = True
+            messagebox.showerror("No Station Name Provided","Enter a Station Name")
+        x = self.cursor.execute(sqlfun, (stopID))
+        if x >= 1:
+            failed = True
+            messagebox.showerror("This stop ID is already in use",  "Please select another stop ID")
+                                
+        try:
+            newFare = self.newStopFare.get()
+            newFare = newFare.strip('$')
+            if float(newFare) > 50 or float(newFare) < 0:
+                failed = True
+                messagebox.showerror('Fare Entry Incorrect', 'Your fare is not within the accepted range. Please enter a value between 0 and 50.')
+            else:
+                newStopFare = float(newFare)
+                newStopFare = '%.2f' % newStopFare
+        except:
+            failed = True
+            messagebox.showerror('Incorrect Fare Value', 'Please enter a monetary value.')
+        if self.varStat2.get() == 1:
+            closedStatus = 0
+        else:
+            closedStatus = 1
+        stopID = self.newStopID.get()
+        if self.v2.get() == "False":
+            isTrain = 0
+            if self.nearestIntersection.get() == "":
+                nearestInt = " "
+            else:
+                nearestInt = self.nearestIntersection.get()
+        elif self.v2.get() == "True":
+            isTrain = 1
+            if self.nearestIntersection.get != "":
+                faile = True
+                messagebox.showerror("Train Station Error", "Train Stations do not have a nearest intersection, please check your input")
+        if not failed:
+            
+            sql = '''INSERT into Station values ('{0}', '{1}', {2}, {3}, {4})
+                     '''
+            stationName = self.newStopName.get()
+            print(stopID, stationName, newStopFare, closedStatus, isTrain)
+            self.cursor.execute(sql.format(stopID, stationName, 12.56, 1, 0))
+            if self.v2.get() == "False":
+                sql2 = '''INSERT into BusStationIntersection values(%s, %s)'''
+                self.cursor.execute(sql2, (stopID, nearestInt))
+            
+            
 
     def adminSuspMgt(self):
         self.adminHomeWin.withdraw()
