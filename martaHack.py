@@ -16,58 +16,48 @@ marta_list = [("Time", "Source", "Destination", "Fare", "Card #")]
 # has an old buzzcard
 
 class MultiColumnListbox(object):
-    def __init__(self,list_Win):
+
+    def __init__(self,frame,car_header,car_list):
+        self.car_header = car_header
+        self.car_list = car_list
+        self.f = frame
         self.tree = None
         self._setup_widgets()
         self._build_tree()
 
-        self.bgColor1 = "SlateGray"
-        self.bgColor2 = "tan2"
-        self.fgColor1 = "burlywood"
-        self.fgColor2 = "burlywood1"
-        self.list_Win = list_Win
-        self.list_Win.configure(bg=self.bgColor1)
-
-        topF = Frame(self.list_Win, bg=self.bgColor1)
-        topF.grid(row=0, column=0, pady=15, padx=10)
-
     def _setup_widgets(self):
-        s = """click on header to sort by that column
-        to change width of column drag boundary
-        """
-        msg = ttk.Label(wraplength="4i", justify="left", anchor="n",
-            padding=(10, 2, 10, 6), text=s)
-        msg.pack(fill='x')
-        container = ttk.Frame()
-        container.pack(fill='both', expand=True)
+        container = ttk.Frame(self.f)
+        container.grid(row=0, column=0,pady=10,padx=10)
         # create a treeview with dual scrollbars
-        self.tree = ttk.Treeview(columns=marta_header, show="headings")
-        vsb = ttk.Scrollbar(orient="vertical",
+        self.tree = ttk.Treeview(container,columns=self.car_header, show="headings")
+        vsb = ttk.Scrollbar(container,orient="vertical",
             command=self.tree.yview)
-        hsb = ttk.Scrollbar(orient="horizontal",
+        hsb = ttk.Scrollbar(container,orient="horizontal",
             command=self.tree.xview)
         self.tree.configure(yscrollcommand=vsb.set,
             xscrollcommand=hsb.set)
-        self.tree.grid(column=0, row=0, sticky='nsew', in_=container)
-        vsb.grid(column=1, row=0, sticky='ns', in_=container)
-        hsb.grid(column=0, row=1, sticky='ew', in_=container)
+        self.tree.grid(column=0, row=0, sticky='nsew')
+        vsb.grid(column=1, row=0, sticky='ns')
+        hsb.grid(column=0, row=1, sticky='ew')
         container.grid_columnconfigure(0, weight=1)
         container.grid_rowconfigure(0, weight=1)
 
 
     def _build_tree(self):
-        for col in marta_header:
+        for col in self.car_header:
             self.tree.heading(col, text=col.title(),
                 command=lambda c=col: self.sortby(self.tree, c, 0))
             self.tree.column(col,
                 width=tkFont.Font().measure(col.title()))
 
-        for item in marta_list:
+        for item in self.car_list:
             self.tree.insert('', 'end', values=item)
             for ix, val in enumerate(item):
                 col_w = tkFont.Font().measure(val)
-                if self.tree.column(marta_header[ix],width=None)<col_w:
-                    self.tree.column(marta_header[ix], width=col_w)
+                if self.tree.column(self.car_header[ix],width=None)<col_w:
+                    self.tree.column(self.car_header[ix], width=col_w)
+
+
 
     def sortby(self,tree, col, descending):
         """sort tree contents when a column header is clicked on"""
@@ -78,6 +68,10 @@ class MultiColumnListbox(object):
             tree.move(item[1], '', ix)
         tree.heading(col, command=lambda col=col: self.sortby(tree, col,
             int(not descending)))
+
+    def gotClicked(self):
+        #print(self.tree.item(self.tree.focus())['values'])
+        return self.tree.item(self.tree.focus())['values']
 
 class MartaHack:
     def __init__(self,homeWin):
@@ -135,7 +129,7 @@ class MartaHack:
             messagebox.showerror("ARF","MULTIPLE USERS HAVE THESE CREDENTIALS. I HAVE NO IDEA HOW THIS IS POSSIBLE, FUCK YOUR SHIT")
         else:
             isAdmin = list(self.cursor.fetchall())[0][0]
-            print(isAdmin)
+            #print(isAdmin)
             if isAdmin:
                 self.homeWin.withdraw()
                 self.adminHome()
@@ -376,29 +370,24 @@ class MartaHack:
 
         topF = Frame(self.aSusWin, bg=self.bgColor1)
         topF.grid(row=0, column=0, pady=15, padx=10)
-        listbox = Listbox(topF)
-        listbox.pack()
-        currencies = {}
-
-        # with open('Try2.csv') as f:
-        #     next(f, None)  # Skip the header.
-        #     reader = csv.reader(f, delimiter=',')
-        #     for Card, Value, Owner in reader:
-        #         currencies[f'{Card} {Value} {Owner}'] = Card
-        #
-        # for key in currencies:
-        #     listbox.insert('end', key)
-        # listbox.grid(row=0, column=0)
-        # listbox.bind('<Key-Return>', lambda event: print(currencies[listbox.selection_get()]))
-
+        header = ["Card #", "New Owner", "Date Suspended", "Previous owner"]
+        data = [("34567890","Conn Man","6/5/3","Avery"),
+                ("3456789","Moo Daddy","56/78/92","Moo Son")]
+        self.SuspCardListBox = MultiColumnListbox(topF,header,data)
         botF = Frame(self.aSusWin, bg=self.bgColor1)
         botF.grid(row=1, column=0, pady=15, padx=10)
-        b1 = Button(botF, text="Assign Selected Card to New Owner", bg=self.fgColor1, command=self.logIn)
+        b1 = Button(botF, text="Assign Selected Card to New Owner", bg=self.fgColor1, command=self.assignSuspCardNewOwner)
         b1.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5)
-        b2 = Button(botF, text="Assign Selected Card to Previous Owner", bg=self.fgColor1, command=self.tripHist)
+        b2 = Button(botF, text="Assign Selected Card to Previous Owner", bg=self.fgColor1, command=self.assignSuspCardOldOwner)
         b2.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
         l1 = Label(botF, text="Assigning the card to an owner will unlock all accounts conflicted on the same Breeze Card.", bg=self.bgColor1)
         l1.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
+
+    def assignSuspCardNewOwner(self):
+        print(self.SuspCardListBox.gotClicked())
+
+    def assignSuspCardOldOwner(self):
+        print(self.SuspCardListBox.gotClicked())
 
     def adminCardMgt(self):
         self.adminHomeWin.withdraw()
