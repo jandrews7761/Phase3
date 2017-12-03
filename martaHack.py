@@ -446,29 +446,38 @@ class MartaHack:
         l1.grid(row=2, column=0, sticky=NSEW, pady=5, padx=5)
         l2 = Label(topF, text="Card Number", bg=self.bgColor1)
         l2.grid(row=3, column=0, sticky=NSEW, pady=5, padx=5)
-        e1 = Entry(topF)
-        e1.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
-        e2 = Entry(topF)
-        e2.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
+        self.j=StringVar()
+        self.j.set("False")
+        e1 = Entry(topF, variable=self.j)
+        e1.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5, columnspan=3)
+        self.k = StringVar()
+        self.k.set("False")
+        e2 = Entry(topF, variable=self.k)
+        e2.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5, columnspan=3)
         l3 = Label(topF, text="Value between", bg=self.bgColor1)
         l3.grid(row=4, column=0, sticky=NSEW, pady=5, padx=5)
-        e3 = Entry(topF)
-        e3.grid(row=4, column=1, sticky=NSEW, pady=5, padx=5)
+        self.l = StringVar()
+        self.l.set("False")
+        e3 = Entry(topF, width=10, variable=self.l)
+        e3.grid(row=4, column= 1, pady=5, padx=5)
         l4 = Label(topF, text="and", bg=self.bgColor1)
-        l4.grid(row=4, column=2, sticky=NSEW, pady=5, padx=5)
-        e4 = Entry(topF)
-        e4.grid(row=4, column=3, sticky=NSEW, pady=5, padx=5)
+        l4.grid(row=4, column=2, pady=5, padx=5)
+        self.m = StringVar()
+        self.m.set("False")
+        e4 = Entry(topF, width=10, variable=self.m)
+        e4.grid(row=4, column=3, pady=5, padx=5)
 
         rightF = Frame(self.aCardWin, bg=self.bgColor1)
         rightF.grid(row=1, column=0, pady=15, padx=10)
-        b1 = Button(topF, text="Reset", bg=self.fgColor1, command=self.logIn)
+        b1 = Button(topF, text="Reset", bg=self.fgColor1, command=self.adminCardMgt)
         b1.grid(row=3, column=4, sticky=NSEW, pady=5, padx=5)
-        b2 = Button(topF, text="Update Filter", bg=self.fgColor1, command=self.tripHist)
+        b2 = Button(topF, text="Update Filter", bg=self.fgColor1, command=self.updateFilter)
         b2.grid(row=4, column=4, sticky=NSEW, pady=5, padx=5)
         self.v = StringVar()
         self.v.set("False")
-        rb1 = Radiobutton(topF, text="Show Suspended Cards", variable=self.v, value="True", bg=self.fgColor1)
+        rb1 = Checkbutton(topF, text="Show Suspended Cards", variable=self.v,onvalue="True", offvalue="False" bg=self.bgColor1)
         rb1.grid(row=2, column=4, columnspan=1, pady=5, padx=5, sticky=NSEW)
+
 
         botF = Frame(self.aCardWin, bg=self.bgColor1)
         botF.grid(row=2, column=0, pady=15, padx=10)
@@ -476,14 +485,72 @@ class MartaHack:
         e5.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
         e6 = Entry(botF)
         e6.grid(row=2, column=0, sticky=NSEW, pady=5, padx=5)
-        b3 = Button(botF, text="Set Value of Selected Card", bg=self.bgColor1, command=self.tripHist)
+        b3 = Button(botF, text="Set Value of Selected Card", bg=self.bgColor1, command=self.setValue)
         b3.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5)
-        b4 = Button(botF, text="Set Value of Selected Card", bg=self.bgColor1, command=self.tripHist)
+        b4 = Button(botF, text="Transfer Selected Card", bg=self.bgColor1, command=self.transferCard)
         b4.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
         header = ["Card #", "New Owner", "Date Suspended", "Previous owner"]
         data = [("34567890", "Conn Man", "6/5/3", "Avery"),
                 ("3456789", "Moo Daddy", "56/78/92", "Moo Son")]
         self.AdminCardListBox = MultiColumnListbox(rightF, header, data)
+
+    def updateFilter(self):
+        j = "%"
+        k = "%"
+        l = 0
+        m = 1000
+        if self.v.get()="True" and self.j.get() = 'False':
+            if self.k.get() != 'False':
+                k = self.k.get()
+            elif self.l.get() != 'False':
+                l = self.l.get()
+            elif self.m.get() != 'False':
+                m = self.l.get()
+            sql = """select *
+            from Breezecard where
+            BelongsTo
+            Like
+            %s and BelongsTo = null and BreezecardNum
+            like
+            %s and Value >= %s and value <= %s;"""
+
+            self.cursor.execute(sql, j, k, l, m)
+            self.db.commit()
+
+        else:
+            j = self.j.get()
+            if self.k.get() != 'False':
+                k = self.k.get()
+            elif self.l.get() != 'False':
+                l = self.l.get()
+            elif self.m.get() != 'False':
+                m = self.l.get()
+            sql = """select *
+            from Breezecard where
+            BelongsTo
+            Like
+            %s and BreezecardNum
+            like
+            %s and Value >= %s and value <= %s;"""
+
+            self.cursor.execute(sql, j, k, l, m)
+            self.db.commit()
+
+
+    def transferCard(self):
+        sql = """Update ‘cs4400_Group_14’.’Breezecard’ 
+        set BelongsTo = newOwner where BreezecardNum = %s;
+        """
+        self.cursor.execute(sql, cardSelected)
+        self.db.commit()
+
+    def setValue(self):
+        sql = """Update ‘cs4400_Group_14’.’Breezecard’  
+        set Value = NewValue where BreezecardNum = %s;
+        """
+
+        self.cursor.execute(sql, cardSelected)
+        self.db.commit()
 
     def pFlowReport(self):
         #self.adminHomeWin.withdraw()
@@ -701,23 +768,27 @@ class MartaHack:
         self.passCardWin.configure(bg=self.bgColor1)
 
         headerF = Frame(self.passCardWin, bg=self.bgColor1)
-        headerF.grid(row=0, column=0, pady=2, padx=2, columnspan=2)
+        headerF.grid(row=0, column=0, pady=2, padx=2)
         l4 = Label(headerF, text="Breeze Cards", bg=self.bgColor1, font=("bold"), anchor='w')
         l4.grid(row=0, column=0, sticky=NSEW, pady=2, padx=5)
 
+        #Use findCard to populate table
+
         topF = Frame(self.passCardWin, bg=self.bgColor1)
-        topF.grid(row=1, column=0, pady=5, padx=10, columnspan=2)
+        topF.grid(row=1, column=0, pady=1, padx=10, columnspan=3)
         header = ["Card #", "New Owner", "Date Suspended", "Previous owner"]
         data = [("34567890", "Conn Man", "6/5/3", "Avery"),
                 ("3456789", "Moo Daddy", "56/78/92", "Moo Son")]
         self.PassCardListBox = MultiColumnListbox(topF, header, data)
 
         midF = Frame(self.passCardWin, bg=self.bgColor1)
-        midF.grid(row=2, column=0, pady=5, padx=10)
+        midF.grid(row=2, column=0, pady=1, padx=10)
         e1 = Entry(midF)
-        e1.grid(row=0, column=0, sticky=NSEW, pady=5, padx=5)
+        e1.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5, columnspan=2)
         b1 = Button(midF, text="Add Card", bg=self.bgColor1, command=self.addCard)
-        b1.grid(row=0, column=1, sticky=NSEW, pady=5, padx=5)
+        b1.grid(row=1, column=2, sticky=NSEW, pady=5, padx=5)
+        b3 = Button(midF, text="Delete Selected Card", bg=self.bgColor1, command=self.deleteCard)
+        b3.grid(row=0, column=1, sticky=NSEW, padx=5)
 
         botF = Frame(self.passCardWin, bg=self.bgColor1)
         botF.grid(row=3, column=0, pady=15, padx=10)
@@ -728,7 +799,7 @@ class MartaHack:
         l2 = Label(botF, text="Credit Card #", bg=self.bgColor1)
         l2.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
         e2 = Entry(botF)
-        e2.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5)
+        e2.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5, columnspan=2)
 
         l3 = Label(botF, text="Value", bg=self.bgColor1)
         l3.grid(row=2, column=0, sticky=NSEW, pady=5, padx=5)
@@ -736,7 +807,14 @@ class MartaHack:
         e3.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
 
         b2 = Button(botF, text="Add Value", bg=self.bgColor1, command=self.addValue)
-        b2.grid(row=3, column=2, sticky=NSEW, pady=5, padx=5)
+        b2.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
+
+    def findCard(self):
+        sql = """select BreezecardNum from Breezecard where not exists 
+        (select * from Breezecard join Conflict where BelongsTo = %s);
+            """
+        self.cursor.execute(sql, username)
+        self.db.commit()
 
     def deleteCard(self):
         sql = ''' Delete BelongsTo from ‘cs4400_Group_14’.’Breezecard’
