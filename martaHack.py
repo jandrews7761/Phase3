@@ -311,16 +311,16 @@ class MartaHack:
     def adminStationMgt(self):
         # withdraw adminHome?? and then build new window
         # buttons to call self.viewStation, self.createStation
-        #self.adminHomeWin.withdraw()
+        # self.adminHomeWin.withdraw()
         self.aStatMgtWin = Toplevel()
-        #self.aStatMgtWin.protocol("WM_DELETE_WINDOW", self.endProgram)
+        # self.aStatMgtWin.protocol("WM_DELETE_WINDOW", self.endProgram)
         self.aStatMgtWin.title("Station Listing")
         self.aStatMgtWin.configure(bg=self.bgColor1)
         topF = Frame(self.aStatMgtWin, bg=self.bgColor1)
         topF.grid(row=0, column=0, pady=15, padx=10)
         header = ["Station Name", "Stop ID", "Fare", "Status"]
         data = self.adminStationMgtQuery()
-        self.stationMgtListBox = MultiColumnListbox(topF,header,data)
+        self.stationMgtListBox = MultiColumnListbox(topF, header, data)
         botF = Frame(self.aStatMgtWin, bg=self.bgColor1)
         botF.grid(row=1, column=0, pady=15, padx=10)
         b1 = Button(botF, text="View Station", bg=self.fgColor1, command=self.viewStation)
@@ -331,9 +331,9 @@ class MartaHack:
 
     def adminStationMgtQuery(self):
         sql = '''SELECT
-                    Name, stopID, EnterFare, ClosedStatus
-                FROM
-                    Station'''
+                           Name, stopID, EnterFare, ClosedStatus
+                       FROM
+                           Station'''
         self.cursor.execute(sql)
         x = list(self.cursor.fetchall())
         a = []
@@ -349,10 +349,9 @@ class MartaHack:
 
     def viewStation(self):
         x = self.stationMgtListBox.gotClicked()
-        print(x)
         self.stopID = x[1]
         sql = '''select Intersection from BusStationIntersection where StopID = %s'''
-        c = self.cursor.execute(sql,(x[1]))
+        c = self.cursor.execute(sql, (x[1]))
         if c >= 1:
             intersection = list(self.cursor.fetchall())[0][0]
         else:
@@ -364,134 +363,192 @@ class MartaHack:
             failed = True
             messagebox.showerror("No Selected Station", "Please select a station first")
         if not failed:
-            self.viewStationWin = Toplevel(width= 200, height=100)
+            self.viewStationWin = Toplevel(width=200, height=100)
             self.viewStationWin.title("Station Details -" + x[0])
             self.viewStationWin.configure(bg=self.bgColor1)
-            titleF = Frame(self.viewStationWin,bg=self.bgColor1)
-            titleF.grid(row=0,column=0,padx=10)
+            titleF = Frame(self.viewStationWin, bg=self.bgColor1)
+            titleF.grid(row=0, column=0, padx=10)
             viewS = Frame(self.viewStationWin, bg=self.bgColor1)
-            viewS.grid(row=1,column=0,pady=10,padx=10)
+            viewS.grid(row=1, column=0, pady=10, padx=10)
             l1 = Label(titleF, text=x[0], bg=self.bgColor1)
-            l1.pack(side=LEFT,pady=20, padx=5)
-            l1.config(font = "bold 16")
-            l2 = Label(titleF, text= "Stop " + str(x[1]), bg=self.bgColor1)
-            l2.pack(side=RIGHT,padx=10, pady=20)
-            l2.config(font = "14")
-            l3 = Label(viewS, text = "Fare", bg=self.bgColor1, justify = LEFT)
-            l3.grid(row = 1, column = 0)
+            l1.pack(side=LEFT, pady=20, padx=5)
+            l1.config(font="bold 16")
+            l2 = Label(titleF, text="Stop " + str(x[1]), bg=self.bgColor1)
+            l2.pack(side=RIGHT, padx=10, pady=20)
+            l2.config(font="14")
+            l3 = Label(viewS, text="Fare", bg=self.bgColor1, justify=LEFT)
+            l3.grid(row=1, column=0)
             e1 = Entry(viewS)
-            #e1.configure(width=10)
+            # e1.configure(width=10)
             e1.insert(0, '$')
             e1.insert(END, x[2])
-            e1.grid(row =1, column = 1,sticky=NSEW,padx=5)
-            #e1.configure(width=8)
-            l4 = Label(viewS, text = "Nearest Intersection" , bg=self.bgColor1, justify = LEFT)
-            l4.grid(row = 2, column = 0, pady=10)
-            #l4.config(font = "12")
-            l6 = Label(viewS, text = intersection, bg=self.bgColor1)
-            l6.grid(row=2, column = 1)
-            b1 = Button(viewS, text = "Update Fare", bg=self.bgColor1, justify = LEFT, command=self.updateFare)
-            b1.grid(row = 1, column = 2)
+            e1.grid(row=1, column=1, sticky=NSEW, padx=5)
+            # e1.configure(width=8)
+            l4 = Label(viewS, text="Nearest Intersection", bg=self.bgColor1, justify=LEFT)
+            l4.grid(row=2, column=0, pady=10)
+            # l4.config(font = "12")
+            l6 = Label(viewS, text=intersection, bg=self.bgColor1)
+            l6.grid(row=2, column=1)
+            b1 = Button(viewS, text="Update Fare", bg=self.bgColor1, justify=LEFT, command=self.updateFare)
+            b1.grid(row=1, column=2)
             self.updateFare = e1
             y = x[3]
             self.varStat = StringVar()
             self.varStat.set(y)
-            c = Checkbutton(viewS, text = "Open Station",bg=self.bgColor1, onvalue = "Open", offvalue = "Closed",variable = self.varStat, command = self.getVarStat)
+            c = Checkbutton(viewS, text="Open Station", bg=self.bgColor1, onvalue="Open", offvalue="Closed",
+                            variable=self.varStat, command=self.getVarStat)
             c.grid(row=3, column=0)
-            l6 = Label(viewS, text = "When checked, passengers can enter at this station.", wraplength=250,bg=self.bgColor1)
-            l6.grid(row=4, column=0, columnspan = 3)
+            l6 = Label(viewS, text="When checked, passengers can enter at this station.", wraplength=250,
+                       bg=self.bgColor1)
+            l6.grid(row=4, column=0, columnspan=3)
 
-            #print(self.stationMgtListBox.gotClicked())
-            #self.aStatMgtWin.withdraw()
+            # print(self.stationMgtListBox.gotClicked())
+            # self.aStatMgtWin.withdraw()
 
     def updateStnMgtListBox(self):
         for item in self.adminStatMgtTopF.grid_slaves():
             item.destroy()
         header = ["Station Name", "Stop ID", "Fare", "Status"]
         data = self.adminStationMgtQuery()
-        self.stationMgtListBox = MultiColumnListbox(self.adminStatMgtTopF,header, data)
+        self.stationMgtListBox = MultiColumnListbox(self.adminStatMgtTopF, header, data)
 
     def getVarStat(self):
         sql = '''UPDATE Station
-                    SET ClosedStatus = %s
-                    WHERE StopID = %s
-                    '''
+                            SET ClosedStatus = %s
+                            WHERE StopID = %s
+                            '''
         if self.varStat.get() == "Open":
             x = 0
         else:
             x = 1
 
-        self.cursor.execute(sql,(x,self.stopID))
+        self.cursor.execute(sql, (x, self.stopID))
         self.db.commit()
         self.updateStnMgtListBox()
-
-    def getVarStat2(self):
-        sql = ''''''
-        #sql insert
-        print(self.varStat2.get())
 
     def updateFare(self):
         x = self.updateFare.get()
         x = x.strip('$')
         sql = '''UPDATE Station
-                    SET EnterFare = %s
-                    WHERE StopID = %s'''
+                            SET EnterFare = %s
+                            WHERE StopID = %s'''
         try:
             if float(x) > 50 or float(x) < 0:
-                messagebox.showerror('Fare Entry Incorrect', 'Your fare is not within the accepted range. Please enter a value between 0 and 50.')
+                messagebox.showerror('Fare Entry Incorrect',
+                                     'Your fare is not within the accepted range. Please enter a value between 0 and 50.')
             else:
                 x = float(x)
                 x = '%.2f' % x
                 x = str(x)
-                self.cursor.execute(sql,(x,self.stopID))
+                self.cursor.execute(sql, (x, self.stopID))
                 self.db.commit()
                 self.updateStnMgtListBox()
         except:
             messagebox.showerror('Incorrect Value', 'Please enter a monetary value.')
 
     def createStation(self):
-        self.createStationWin = Toplevel(width= 200, height=100)
-        #self.viewStationWin.protocol("WM_DELETE_WINDOW", self.endProgram
+        self.createStationWin = Toplevel(width=200, height=100)
+        # self.viewStationWin.protocol("WM_DELETE_WINDOW", self.endProgram
         self.createStationWin.title("Create New Station")
         self.createStationWin.configure(bg=self.bgColor1)
         createS = Frame(self.createStationWin, bg=self.bgColor1)
-        createS.grid(padx=10, row= 0, column=0)
-        l1 = Label(createS, text = "Station Name", bg = self.bgColor1)
-        l1.grid(row=0, column = 0,pady=5)
-        l2 = Label(createS, text = "Stop ID", bg = self.bgColor1)
-        l2.grid(row=1, column = 0,pady=5)
-        l3 = Label(createS, text = "Entry Fare", bg = self.bgColor1)
-        l3.grid(row=2, column = 0,pady=5)
-        sql = ''''''
-        #sql insert
+        createS.grid(padx=10, row=0, column=0)
+        l1 = Label(createS, text="Station Name", bg=self.bgColor1)
+        l1.grid(row=0, column=0, pady=5)
+        l2 = Label(createS, text="Stop ID", bg=self.bgColor1)
+        l2.grid(row=1, column=0, pady=5)
+        l3 = Label(createS, text="Entry Fare", bg=self.bgColor1)
+        l3.grid(row=2, column=0, pady=5)
+        # sql insert
         e1 = Entry(createS)
-        e1.grid(row=0, column =1)
+        e1.grid(row=0, column=1)
         e2 = Entry(createS)
-        e2.grid(row=1, column =1)
+        e2.grid(row=1, column=1)
         e3 = Entry(createS)
-        e3.insert(0,'$')
-        e3.grid(row=2, column =1)
+        e3.insert(0, '$')
+        e3.grid(row=2, column=1)
         self.v2 = StringVar()
         self.v2.set("False")
-        l4 = Label(createS, text = "Station Type", bg = self.bgColor1)
-        l4.grid(row=3, column = 0, pady=5)
-        busS = Frame(createS, bg = self.bgColor1)
-        busS.grid(row=3, column =1)
-        rb1 = Radiobutton(busS,text="Bus Station",variable = self.v2, value = "False",bg=self.bgColor1)
-        rb1.grid(row=0,column = 1, columnspan=2,padx=5)
-        l5 = Label(busS,text= "Nearest Intersection",bg=self.bgColor1)
-        l5.grid(row=1,padx=5,column = 1, sticky=NSEW)
+        l4 = Label(createS, text="Station Type", bg=self.bgColor1)
+        l4.grid(row=3, column=0, pady=5)
+        busS = Frame(createS, bg=self.bgColor1)
+        busS.grid(row=3, column=1)
+        rb1 = Radiobutton(busS, text="Bus Station", variable=self.v2, value="False", bg=self.bgColor1)
+        rb1.grid(row=0, column=1, columnspan=2, padx=5)
+        l5 = Label(busS, text="Nearest Intersection", bg=self.bgColor1)
+        l5.grid(row=1, padx=5, column=1, sticky=NSEW)
         e5 = Entry(busS)
-        e5.grid(row=2,padx=5,column = 1, sticky=NSEW)
-        rb2 = Radiobutton(busS,text="Train Station",variable = self.v2,value = "True",bg=self.bgColor1)
-        rb2.grid(row=3,padx=5,column = 1, columnspan=2)
+        e5.grid(row=2, padx=5, column=1, sticky=NSEW)
+        rb2 = Radiobutton(busS, text="Train Station", variable=self.v2, value="True", bg=self.bgColor1)
+        rb2.grid(row=3, padx=5, column=1, columnspan=2)
         self.varStat2 = IntVar()
-        print(self.varStat2.get())
-        c = Checkbutton(createS, text = "Open Station",bg=self.bgColor1, variable = self.varStat2, command = self.getVarStat2)
-        c.grid(row=4, column=0, sticky = E)
-        l6 = Label(createS, text = "When checked, passengers can enter at this station.", wraplength=250,bg=self.bgColor1)
-        l6.grid(row=5, column=0, columnspan = 2)
-        print(self.v2.get())
+        c = Checkbutton(createS, text="Open Station", bg=self.bgColor1, variable=self.varStat2)
+        c.grid(row=4, column=0, sticky=E)
+        l6 = Label(createS, text="When checked, passengers can enter at this station.", wraplength=250,
+                   bg=self.bgColor1)
+        l6.grid(row=5, column=0, columnspan=2)
+        self.newStopID = e2
+        self.newStopName = e1
+        self.newStopFare = e3
+        self.nearestIntersection = e5
+        b1 = Button(createS, text="Create Station", bg=self.fgColor1, command=self.createNewStation)
+        b1.grid(row=6, column=1, sticky=NSEW, pady=5, padx=5)
+
+    def createNewStation(self):
+        failed = False
+        stopID = self.newStopID.get()
+        if self.newStopID.get() == "":
+            failed = True
+            messagebox.showerror("No Stop ID Provided", "Enter a Stop ID")
+        sqlfun = '''SELECT StopID from Station WHERE StopID = %s'''
+        if self.newStopName.get() == "":
+            failed = True
+            messagebox.showerror("No Station Name Provided", "Enter a Station Name")
+        x = self.cursor.execute(sqlfun, (stopID))
+        if x >= 1:
+            failed = True
+            messagebox.showerror("This stop ID is already in use", "Please select another stop ID")
+
+        try:
+            newFare = self.newStopFare.get()
+            newFare = newFare.strip('$')
+            if float(newFare) > 50 or float(newFare) < 0:
+                failed = True
+                messagebox.showerror('Fare Entry Incorrect',
+                                     'Your fare is not within the accepted range. Please enter a value between 0 and 50.')
+            else:
+                newStopFare = float(newFare)
+                newStopFare = '%.2f' % newStopFare
+        except:
+            failed = True
+            messagebox.showerror('Incorrect Fare Value', 'Please enter a monetary value.')
+        if self.varStat2.get() == 1:
+            closedStatus = 0
+        else:
+            closedStatus = 1
+        stopID = self.newStopID.get()
+        if self.v2.get() == "False":
+            isTrain = 0
+            if self.nearestIntersection.get() == "":
+                nearestInt = " "
+            else:
+                nearestInt = self.nearestIntersection.get()
+        elif self.v2.get() == "True":
+            isTrain = 1
+            if self.nearestIntersection.get != "":
+                faile = True
+                messagebox.showerror("Train Station Error",
+                                     "Train Stations do not have a nearest intersection, please check your input")
+        if not failed:
+
+            sql = '''INSERT into Station values ('{0}', '{1}', {2}, {3}, {4})
+                     '''
+            stationName = self.newStopName.get()
+            print(stopID, stationName, newStopFare, closedStatus, isTrain)
+            self.cursor.execute(sql.format(stopID, stationName, 12.56, 1, 0))
+            if self.v2.get() == "False":
+                sql2 = '''INSERT into BusStationIntersection values(%s, %s)'''
+                self.cursor.execute(sql2, (stopID, nearestInt))
 
     ####### zach's part ends here, other admin capabilities by Avery start ####
 
