@@ -349,6 +349,7 @@ class MartaHack:
 
     def viewStation(self):
         x = self.stationMgtListBox.gotClicked()
+        print(x)
         self.stopID = x[1]
         sql = '''select Intersection from BusStationIntersection where StopID = %s'''
         c = self.cursor.execute(sql,(x[1]))
@@ -424,6 +425,11 @@ class MartaHack:
         self.db.commit()
         self.updateStnMgtListBox()
 
+    def getVarStat2(self):
+        sql = ''''''
+        #sql insert
+        print(self.varStat2.get())
+
     def updateFare(self):
         x = self.updateFare.get()
         x = x.strip('$')
@@ -456,7 +462,8 @@ class MartaHack:
         l2.grid(row=1, column = 0,pady=5)
         l3 = Label(createS, text = "Entry Fare", bg = self.bgColor1)
         l3.grid(row=2, column = 0,pady=5)
-        #sql insert 
+        sql = ''''''
+        #sql insert
         e1 = Entry(createS)
         e1.grid(row=0, column =1)
         e2 = Entry(createS)
@@ -479,75 +486,13 @@ class MartaHack:
         rb2 = Radiobutton(busS,text="Train Station",variable = self.v2,value = "True",bg=self.bgColor1)
         rb2.grid(row=3,padx=5,column = 1, columnspan=2)
         self.varStat2 = IntVar()
-        c = Checkbutton(createS, text = "Open Station",bg=self.bgColor1, variable = self.varStat2)
+        print(self.varStat2.get())
+        c = Checkbutton(createS, text = "Open Station",bg=self.bgColor1, variable = self.varStat2, command = self.getVarStat2)
         c.grid(row=4, column=0, sticky = E)
         l6 = Label(createS, text = "When checked, passengers can enter at this station.", wraplength=250,bg=self.bgColor1)
         l6.grid(row=5, column=0, columnspan = 2)
-        self.newStopID = e2
-        self.newStopName = e1
-        self.newStopFare = e3
-        self.nearestIntersection = e5
-        b1 = Button(createS, text="Create Station", bg=self.fgColor1, command=self.createNewStation)
-        b1.grid(row=6, column=1, sticky=NSEW, pady=5, padx=5)
-        
-        
-                
-        
-    def createNewStation(self):
-        failed = False
-        stopID = self.newStopID.get()
-        if self.newStopID.get() == "":
-            failed = True
-            messagebox.showerror("No Stop ID Provided","Enter a Stop ID")
-        sqlfun = '''SELECT StopID from Station WHERE StopID = %s'''
-        if self.newStopName.get() == "":
-            failed = True
-            messagebox.showerror("No Station Name Provided","Enter a Station Name")
-        x = self.cursor.execute(sqlfun, (stopID))
-        if x >= 1:
-            failed = True
-            messagebox.showerror("This stop ID is already in use",  "Please select another stop ID")
-                                
-        try:
-            newFare = self.newStopFare.get()
-            newFare = newFare.strip('$')
-            if float(newFare) > 50 or float(newFare) < 0:
-                failed = True
-                messagebox.showerror('Fare Entry Incorrect', 'Your fare is not within the accepted range. Please enter a value between 0 and 50.')
-            else:
-                newStopFare = float(newFare)
-                newStopFare = '%.2f' % newStopFare
-        except:
-            failed = True
-            messagebox.showerror('Incorrect Fare Value', 'Please enter a monetary value.')
-        if self.varStat2.get() == 1:
-            closedStatus = 0
-        else:
-            closedStatus = 1
-        stopID = self.newStopID.get()
-        if self.v2.get() == "False":
-            isTrain = 0
-            if self.nearestIntersection.get() == "":
-                nearestInt = " "
-            else:
-                nearestInt = self.nearestIntersection.get()
-        elif self.v2.get() == "True":
-            isTrain = 1
-            if self.nearestIntersection.get != "":
-                faile = True
-                messagebox.showerror("Train Station Error", "Train Stations do not have a nearest intersection, please check your input")
-        if not failed:
-            
-            sql = '''INSERT into Station values ('{0}', '{1}', {2}, {3}, {4})
-                     '''
-            stationName = self.newStopName.get()
-            print(stopID, stationName, newStopFare, closedStatus, isTrain)
-            self.cursor.execute(sql.format(stopID, stationName, 12.56, 1, 0))
-            if self.v2.get() == "False":
-                sql2 = '''INSERT into BusStationIntersection values(%s, %s)'''
-                self.cursor.execute(sql2, (stopID, nearestInt))
+        print(self.v2.get())
 
-                
     ####### zach's part ends here, other admin capabilities by Avery start ####
 
     def adminSuspMgt(self):
@@ -620,7 +565,7 @@ class MartaHack:
 
         rightF = Frame(self.aCardWin, bg=self.bgColor1)
         rightF.grid(row=1, column=0, pady=15, padx=10)
-        b1 = Button(topF, text="Reset", bg=self.fgColor1, command=self.adminCardMgt)
+        b1 = Button(topF, text="Reset", bg=self.fgColor1, command=self.resetAdminCardMgt)
         b1.grid(row=3, column=4, sticky=NSEW, pady=5, padx=5)
         b2 = Button(topF, text="Update Filter", bg=self.fgColor1, command=self.updateFilter)
         b2.grid(row=4, column=4, sticky=NSEW, pady=5, padx=5)
@@ -657,45 +602,59 @@ class MartaHack:
             if self.l.get() != '':
                 l = self.l.get()
             if self.m.get() != '':
-                m = self.l.get()
+                m = self.m.get()
             sql = """select *
             from Breezecard where
-            BelongsTo
-            Like
-            %s and BelongsTo = null and BreezecardNum
+            BreezecardNum
             like
-            %s and Value >= %s and value <= %s;"""
+            %s and Value >= %s and Value <= %s;"""
 
-            self.cursor.execute(sql, (j, k, l, m))
+            self.cursor.execute(sql, (k, l, m))
             self.db.commit()
             data = list(self.cursor.fetchall())
-            self.updateAdminCardListBox()
+            tups = []
+            for row in data:
+                row = list(row)
+                if row[2] is None:
+                    row[2] = "Suspended"
+                tups.append(tuple(row))
+            print((k, l, m))
+            print(tups)
+            self.updateAdminCardListBox(tups)
 
         else:
-            j = self.j.get()
+            if self.j.get() != '':
+                j = self.j.get()
             if self.k.get() != '':
                 k = self.k.get()
             if self.l.get() != '':
                 l = self.l.get()
             if self.m.get() != '':
-                m = self.l.get()
+                m = self.m.get()
             sql = """select *
             from Breezecard where
             BelongsTo
             Like
             %s and BreezecardNum
             like
-            %s and Value >= %s and value <= %s;"""
+            %s and Value >= %s and Value <= %s;"""
 
             self.cursor.execute(sql, (j, k, l, m))
             self.db.commit()
             data = list(self.cursor.fetchall())
+            print((j, k, l, m))
+            print(data)
             self.updateAdminCardListBox(data)
 
-    def updateAdminCardListBox(self):
+    def updateAdminCardListBox(self,data):
         for item in self.adminCardContainer.grid_slaves():
             item.destroy()
         header = ["Card #", "New Owner", "Date Suspended", "Previous owner"]
+        self.AdminCardListBox = MultiColumnListbox(self.adminCardContainer, header, data)
+
+    def resetAdminCardMgt(self):
+        self.aCardWin.destroy()
+        self.adminCardMgt()
 
     def transferCard(self):
         sql = """Update ‘cs4400_Group_14’.’Breezecard’
