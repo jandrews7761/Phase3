@@ -691,10 +691,10 @@ class MartaHack:
 
         botF = Frame(self.aCardWin, bg=self.bgColor1)
         botF.grid(row=2, column=0, pady=15, padx=10)
-        e5 = Entry(botF)
-        e5.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
-        e6 = Entry(botF)
-        e6.grid(row=2, column=0, sticky=NSEW, pady=5, padx=5)
+        self.e5 = Entry(botF)
+        self.e5.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
+        self.e6 = Entry(botF)
+        self.e6.grid(row=2, column=0, sticky=NSEW, pady=5, padx=5)
         b3 = Button(botF, text="Set Value of Selected Card", bg=self.bgColor1, command=self.setValue)
         b3.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5)
         b4 = Button(botF, text="Transfer Selected Card", bg=self.bgColor1, command=self.transferCard)
@@ -764,7 +764,7 @@ class MartaHack:
     def updateAdminCardListBox(self,data):
         for item in self.adminCardContainer.grid_slaves():
             item.destroy()
-        header = ["Card #", "New Owner", "Date Suspended", "Previous owner"]
+        header = ["Card #", "Value", "Owner"]
         self.AdminCardListBox = MultiColumnListbox(self.adminCardContainer, header, data)
 
     def resetAdminCardMgt(self):
@@ -772,19 +772,56 @@ class MartaHack:
         self.adminCardMgt()
 
     def transferCard(self):
-        sql = """Update ‘cs4400_Group_14’.’Breezecard’
-        set BelongsTo = %s where BreezecardNum = %s;
-        """ 
-        self.cursor.execute(sql, cardSelected)
-        self.db.commit()
+        select = self.AdminCardListBox.gotClicked()
+        cardSelected = str(select[0])
+        newOwner = str(self.e6.get())
+        sqlone = """Select Username from Passenger;"""
+        self.cursor.execute(sqlone)
+        Passengers = self.cursor.fetchall()
+        newList = []
+        for x in Passengers:
+            newList.append(x[0])
+        print(newList)
+        conflictCards = """Select BreezeCardNum from Conflict;"""
+        self.cursor.execute(conflictCards)
+        Conflict = self.cursor.fetchall()
+        conflictList = []
+        for x in Conflict:
+            conflictList.append(x[0])
+        print(conflictList)
+        if newOwner in newList:
+            sqlThree = """Update Breezecard set BelongsTo = %s where BreezeCardNum = %s;"""
+            self.cursor.execute(sqlThree, (newOwner, cardSelected))
+            self.db.commit()
+            self.updateFilter()
+            if cardSelected in conflictList:
+                sqlFour = """Delete from Conflict where CardNumber = %s"""
+                self.cursor.execute(sqlFour, (cardSelected))
+                self.db.commit()
+                self.updateFilter()
+
+        else:
+            messagebox.showerror("Error","You have selected an Admin account or the account you selected does not exist! Please try again.")
+
 
     def setValue(self):
-        sql = """Update ‘cs4400_Group_14’.’Breezecard’
-        set Value = NewValue where BreezecardNum = %s;
-        """
 
-        self.cursor.execute(sql, cardSelected)
-        self.db.commit()
+        Value = self.e5.get()
+        select = self.AdminCardListBox.gotClicked()
+        pValue = float(select[1]) + float(Value)
+        valueNew = str(pValue)
+        cardSelected = select[0]
+        if pValue <= 1000:
+            sql = '''Update Breezecard
+                set Value = %s
+                where BreezeCardNum = %s;
+                '''
+            self.cursor.execute(sql, (valueNew, cardSelected))
+            self.db.commit()
+            self.updateFilter()
+        else:
+            messagebox.showerror("Error", "You can not have more than $1000 on your Breezecard. Lower the amount you wish to add to your account")
+
 
     def pFlowReport(self):
         #self.adminHomeWin.withdraw()
@@ -1044,11 +1081,13 @@ class MartaHack:
         data = [("34567890", "Conn Man", "6/5/3", "Avery"),
                 ("3456789", "Moo Daddy", "56/78/92", "Moo Son")]
         self.PassCardListBox = MultiColumnListbox(topF, header, data)
+        self.PassCardContainer = topF
+        self.findCard()
 
         midF = Frame(self.passCardWin, bg=self.bgColor1)
         midF.grid(row=2, column=0, pady=1, padx=10)
-        e1 = Entry(midF)
-        e1.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5, columnspan=2)
+        self.e =  Entry(midF)
+        self.e.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5, columnspan=2)
         b1 = Button(midF, text="Add Card", bg=self.bgColor1, command=self.addCard)
         b1.grid(row=1, column=2, sticky=NSEW, pady=5, padx=5)
         b3 = Button(midF, text="Delete Selected Card", bg=self.bgColor1, command=self.deleteCard)
@@ -1062,45 +1101,104 @@ class MartaHack:
 
         l2 = Label(botF, text="Credit Card #", bg=self.bgColor1)
         l2.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
-        e2 = Entry(botF)
-        e2.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5, columnspan=2)
+        self.e2 = Entry(botF)
+        self.e2.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5, columnspan=2)
 
         l3 = Label(botF, text="Value", bg=self.bgColor1)
         l3.grid(row=2, column=0, sticky=NSEW, pady=5, padx=5)
-        e3 = Entry(botF)
-        e3.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
+        self.t = Entry(botF)
+        self.t.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
 
         b2 = Button(botF, text="Add Value", bg=self.bgColor1, command=self.addValue)
         b2.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
 
+
     def findCard(self):
-        sql = """select BreezecardNum from Breezecard where not exists
-        (select * from Breezecard join Conflict where BelongsTo = %s);
-            """
-        self.cursor.execute(sql, username)
+        username = self.userE.get()
+        sql = """select BreezecardNum, Value from Breezecard where not exists
+                (select * from Breezecard join Conflict on Breezecard.BreezecardNum = Conflict.BreezecardNum 
+                where Breezecard.BelongsTo = %s) and BelongsTo = %s;
+                    """
+        self.cursor.execute(sql, (username, username))
         self.db.commit()
+        data = list(self.cursor.fetchall())
+        self.updatePassCardListBox(data)
+
+    def updatePassCardListBox(self,data):
+        for item in self.PassCardContainer.grid_slaves():
+            item.destroy()
+        header = ["Card #", "Value"]
+        self.PassCardListBox = MultiColumnListbox(self.PassCardContainer, header, data)
 
     def deleteCard(self):
-        sql = ''' Delete BelongsTo from ‘cs4400_Group_14’.’Breezecard’
-        where BreezecardNum = %s;
+        card = self.PassCardListBox.gotClicked()
+        cardSelected = str(card[0])
+        sql = ''' Update Breezecard
+        set BelongsTo = null
+        where BreezeCardNum = %s;
         '''
-        self.cursor.execute(sql,cardSelected)
+        self.cursor.execute(sql,(cardSelected))
         self.db.commit()
+        self.findCard()
 
     def addValue(self):
-        sql = '''Update ‘cs4400_Group_14’.’Breezecard’
-            set Value = %s
-            where BreezeCardNum = %s;
-            '''
-        self.cursor.execute(sql, valueNew, cardSelected)
+
+        if len(self.e2.get()) == 16:
+            Value = self.t.get()
+            select = self.PassCardListBox.gotClicked()
+            pValue = float(select[1]) + float(Value)
+            valueNew = str(pValue)
+            cardSelected = select[0]
+            if pValue <= 1000:
+                sql = '''Update Breezecard
+                    set Value = %s
+                    where BreezeCardNum = %s;
+                    '''
+                self.cursor.execute(sql, (valueNew, cardSelected))
+                self.db.commit()
+                self.findCard()
+            else:
+                messagebox.showerror("Error", "You can not have more than $1000 on your Breezecard. Lower the amount you wish to add to your account")
+        else:
+            messagebox.showerror("Error", "Your Credit Card must have 16 numbers exactly. Please try Again.")
+
+    def createConflict(self, cardNum):
+        newUsername = self.userE.get()
+        card = cardNum
+        time = strftime("%Y-%m-%d %H:%M:%S", localtime())
+        sqlSecond = """ Insert into Conflict (Username, BreezecardNum, DateTime)
+             values (%s, %s, %s)"""
+        self.cursor.execute(sqlSecond, (newUsername, card, time))
         self.db.commit()
+        self.findCard()
 
     def addCard(self):
-        sql = '''Insert into ‘cs4400_Group_14’.’Breezecard’ (‘BreezecardNum’, ‘Value’, ‘BelongsTo’)
-        values (%s, 0, %s);
-        '''
-        self.cursor.execute(sql, BreezeCardNum, Username)
-        self.db.commit()
+        username = self.userE.get()
+        card = self.e.get()
+        cardNum = str(card)
+        value = "0.00"
+        sql = """Select BreezecardNum from Breezecard;"""
+        self.cursor.execute(sql)
+        cardList = self.cursor.fetchall()
+        print(cardList)
+
+        if len(cardNum) ==16:
+            newList = []
+            for x in cardList:
+                newList.append(x[0])
+            if cardNum not in newList:
+                sql = '''Insert into Breezecard (BreezecardNum, Value, BelongsTo)
+                values (%s, %s, %s);
+                '''
+                self.cursor.execute(sql, (cardNum, value, username))
+                self.db.commit()
+                self.findCard()
+            else:
+                self.createConflict(cardNum)
+                messagebox.showerror("Error", "This Breezecard already has an owner. An Admin will solve this issue shortly.")
+        else:
+            messagebox.showerror("Error", "Breezecard Number must have 16 numbers exactly. Please try Again.")
+
 
     def tripHist(self):
         #self.passHomeWin.withdraw()
