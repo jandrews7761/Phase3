@@ -1007,6 +1007,7 @@ class MartaHack:
         card = self.bCardNumvar.get()[2:-3]
         sql = '''update Trip set EndsAt = %s where BreezeCardNum = %s and EndsAt is null'''
         self.cursor.execute(sql,(end,card))
+        self.db.commit()
 
     def cardMgt(self):
         #self.passHomeWin.withdraw()
