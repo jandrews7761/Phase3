@@ -877,14 +877,21 @@ class MartaHack:
         for row in data:
             tups.append((str(row[0]) + " - " + str(row[1])))
         tups = tuple(tups)
-
+        sql = '''select Name from Station'''
+        self.cursor.execute(sql)
+        data2 = tuple(list(self.cursor.fetchall()))
+        data = []
+        for row in data2:
+            data.append(row[0])
         self.startStationVar = StringVar()
         self.startStationVar.set(tups[0])
+        self.endStationVar = StringVar()
+        self.endStationVar.set(data[0])
 
         self.startStat = OptionMenu(topF,self.startStationVar,*tups, command=self.changeCardSelect)
         self.startStat.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
-        e4 = Entry(topF)
-        e4.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
+        self.endStat = OptionMenu(topF,self.endStationVar,*data, command=self.changeCardSelect)
+        self.endStat.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
 
         botF = Frame(self.passHomeWin, bg=self.bgColor1)
         botF.grid(row=1, column=0, pady=15, padx=10)
@@ -928,12 +935,12 @@ class MartaHack:
         c = self.cursor.execute(sql,(newCard))
         bzVal = self.cursor.fetchall()[0][0]
         self.bzValLabel.config(text=("$ " + str(bzVal)))
-        sql = '''select * from Trip where BreezecardNum = %s and EndsAt is null'''
+        ### RUN SQL TO CHECK IF TRIP CAN BE STARTED FROM VALUE OF Card
+        ### RUN SQL TO FIND WHAT STATIONS THE TRIP CAN BE ENDED AT AND POPULATE THE OPTION MENU WITH IT
+        sql = '''select startsAt from Trip where BreezecardNum = %s and EndsAt is null'''
         #print("newCard is", newCard[0])
         c = self.cursor.execute(sql,(newCard))
         #print(c)
-        ### RUN SQL TO CHECK IF TRIP CAN BE STARTED FROM VALUE OF Card
-        ### RUN SQL TO FIND WHAT STATIONS THE TRIP CAN BE ENDED AT AND POPULATE THE OPTION MENU WITH IT
         if c>=1:
             try:
                 self.startB.destroy()
@@ -942,7 +949,25 @@ class MartaHack:
             self.inProgressLabel = Label(self.passHomeTopF,text= "Trip in Progress", bg=self.bgColor1)
             self.inProgressLabel.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
             self.endB.config(state="normal")
+            self.endStat.config(state="normal")
+            # get start station and disable it
+            startsAt = self.cursor.fetchall()[0][0]
+            print(startsAt)
+            sql = '''select Name,EnterFare,IsTrain from Station where stopID = %s'''
+            self.cursor.execute(sql,(startsAt))
+            row = self.cursor.fetchall()[0]
+            print(row)
+            self.startStationVar.set(row[0] + " - " + str(row[1]))
             self.startStat.config(state=DISABLED)
+            isTrain = row[2]
+            sql = '''select Name from Station where isTrain = %s'''
+            self.cursor.execute(sql,(isTrain))
+            data = list(self.cursor.fetchall())
+            names = []
+            for row in data:
+                names.append(row[0])
+            self.endStat = OptionMenu(self.passHomeTopF,self.endStationVar,*names, command=self.changeCardSelect)
+            self.endStat.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
         else:
             try:
                 self.inProgressLabel.destroy()
@@ -952,6 +977,8 @@ class MartaHack:
             self.startB.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
             ## IF BALANCE NOT ENOUGH TO START, DISABLE BUTTON
             self.endB.config(state=DISABLED)
+            self.endStat.config(state=DISABLED)
+            self.startStat.config(state="normal")
             s = self.startStationVar.get()
             print(float(s[s.rfind("-")+2:]))
             d = float(s[s.rfind("-")+2:])
