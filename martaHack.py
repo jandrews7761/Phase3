@@ -253,6 +253,7 @@ class MartaHack:
                 # AUTO GENERATE HERE
             sql1 = '''INSERT INTO User VALUES (%s,%s,%s)'''
             sql2 = '''INSERT INTO Passenger VALUES (%s,%s)'''
+            sql3 = '''INSERT INTO Breezecard values (%s,{0},%s)'''.format(0.00)
             # hash password
             pwd = self.pass1e.get()
             encoded = pwd.encode('utf-8')
@@ -260,24 +261,28 @@ class MartaHack:
             m.update(encoded)
             passHash = m.hexdigest()
             # try to insert into sql, if anything goes wrong, error to user
+            fail = False
             try:
                 self.cursor.execute(sql1,(self.usrE.get(),passHash,False))
                 self.cursor.execute(sql2,(self.usrE.get(),self.eAddE.get()))
                 messagebox.showinfo("Success","Account successfully created with buzzcard: " + bzNum)
+                self.cursor.execute(sql3,(bzNum,self.usrE.get()))
+            except:
+                messagebox.showerror("An Error Occured","Please check your network connection and try again")
+                fail = True
+            if not fail:
                 self.db.commit()
                 self.username = self.usrE.get()
                 self.regWin.destroy()
                 self.passHome()
-            except:
-                messagebox.showerror("An Error Occured","Please check your network connection and try again")
 
     def autoGenerate(self):
         # AUTO GENERATE A NUMBER HERE
         bzNum = random.randint(1000000000000000,9999999999999999)
         # AUTO GENERATE A NUMBER HERE
         bzNum = str(bzNum)
-        sql = '''SELECT BreezecardNum FROM breezecard WHERE BreezecardNum = %s'''
-        c = cursor.execute(sql,(bzNum))
+        sql = '''SELECT BreezecardNum FROM Breezecard WHERE BreezecardNum = %s'''
+        c = self.cursor.execute(sql,(bzNum))
         if c == 0:
             return bzNum
         else:
@@ -825,7 +830,10 @@ class MartaHack:
 
     def passHome(self):
         # buttons to call self.cardMgt, self.tripHist, self.logOut
-        self.homeWin.withdraw()
+        try:
+            self.homeWin.withdraw()
+        except:
+            pass
         self.passHomeWin = Toplevel()
         self.passHomeWin.protocol("WM_DELETE_WINDOW", self.endProgram)
         self.passHomeWin.title("Welcome to MARTA")
@@ -871,9 +879,10 @@ class MartaHack:
         tups = tuple(tups)
 
         self.startStationVar = StringVar()
+        self.startStationVar.set(tups[0])
 
-        e3 = Entry(topF)
-        e3.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
+        self.startStat = OptionMenu(topF,self.startStationVar,*tups, command=self.changeCardSelect)
+        self.startStat.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
         e4 = Entry(topF)
         e4.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
 
@@ -913,13 +922,15 @@ class MartaHack:
 
     def changeCardSelect(self,newCard):
         #print("a new card has been selected!")
+        print("is the card",self.bCardNumvar.get()[2:-3],"?  ",type(self.bCardNumvar.get()))
+        newCard = self.bCardNumvar.get()[2:-3]
         sql = '''select value from Breezecard where BreezecardNum = %s'''
-        c = self.cursor.execute(sql,(newCard[0]))
+        c = self.cursor.execute(sql,(newCard))
         bzVal = self.cursor.fetchall()[0][0]
         self.bzValLabel.config(text=("$ " + str(bzVal)))
         sql = '''select * from Trip where BreezecardNum = %s and EndsAt is null'''
         #print("newCard is", newCard[0])
-        c = self.cursor.execute(sql,(newCard[0]))
+        c = self.cursor.execute(sql,(newCard))
         #print(c)
         ### RUN SQL TO CHECK IF TRIP CAN BE STARTED FROM VALUE OF Card
         ### RUN SQL TO FIND WHAT STATIONS THE TRIP CAN BE ENDED AT AND POPULATE THE OPTION MENU WITH IT
@@ -931,6 +942,7 @@ class MartaHack:
             self.inProgressLabel = Label(self.passHomeTopF,text= "Trip in Progress", bg=self.bgColor1)
             self.inProgressLabel.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
             self.endB.config(state="normal")
+            self.startStat.config(state=DISABLED)
         else:
             try:
                 self.inProgressLabel.destroy()
@@ -940,6 +952,11 @@ class MartaHack:
             self.startB.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
             ## IF BALANCE NOT ENOUGH TO START, DISABLE BUTTON
             self.endB.config(state=DISABLED)
+            s = self.startStationVar.get()
+            print(float(s[s.rfind("-")+2:]))
+            d = float(s[s.rfind("-")+2:])
+            if d > bzVal:
+                self.startB.config(state=DISABLED)
 
     def startTrip(self):
         pass
