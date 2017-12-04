@@ -8,8 +8,7 @@ import tkinter.ttk as ttk
 import csv
 import random
 from re import match
-import datetime
-from time import localtime, strftime
+from time import gmttime, strftime
 
 
 # THINGS TO DO:
@@ -41,7 +40,7 @@ class MultiColumnListbox(object):
             command=self.tree.xview)
         self.tree.configure(yscrollcommand=vsb.set,
             xscrollcommand=hsb.set)
-        self.tree.grid(column=0, row=0, sticky=NSEW)
+        self.tree.grid(column=0, row=0, sticky='nsew')
         vsb.grid(column=1, row=0, sticky='ns')
         hsb.grid(column=0, row=1, sticky='ew')
         container.grid_columnconfigure(0, weight=1)
@@ -256,6 +255,7 @@ class MartaHack:
                 # AUTO GENERATE HERE
             sql1 = '''INSERT INTO User VALUES (%s,%s,%s)'''
             sql2 = '''INSERT INTO Passenger VALUES (%s,%s)'''
+            sql3 = '''INSERT INTO Breezecard values (%s,{0},%s)'''.format(0.00)
             # hash password
             pwd = self.pass1e.get()
             encoded = pwd.encode('utf-8')
@@ -263,24 +263,28 @@ class MartaHack:
             m.update(encoded)
             passHash = m.hexdigest()
             # try to insert into sql, if anything goes wrong, error to user
+            fail = False
             try:
                 self.cursor.execute(sql1,(self.usrE.get(),passHash,False))
                 self.cursor.execute(sql2,(self.usrE.get(),self.eAddE.get()))
                 messagebox.showinfo("Success","Account successfully created with buzzcard: " + bzNum)
+                self.cursor.execute(sql3,(bzNum,self.usrE.get()))
+            except:
+                messagebox.showerror("An Error Occured","Please check your network connection and try again")
+                fail = True
+            if not fail:
                 self.db.commit()
                 self.username = self.usrE.get()
                 self.regWin.destroy()
                 self.passHome()
-            except:
-                messagebox.showerror("An Error Occured","Please check your network connection and try again")
 
     def autoGenerate(self):
         # AUTO GENERATE A NUMBER HERE
         bzNum = random.randint(1000000000000000,9999999999999999)
         # AUTO GENERATE A NUMBER HERE
         bzNum = str(bzNum)
-        sql = '''SELECT BreezecardNum FROM breezecard WHERE BreezecardNum = %s'''
-        c = cursor.execute(sql,(bzNum))
+        sql = '''SELECT BreezecardNum FROM Breezecard WHERE BreezecardNum = %s'''
+        c = self.cursor.execute(sql,(bzNum))
         if c == 0:
             return bzNum
         else:
@@ -636,10 +640,10 @@ class MartaHack:
 
         botF = Frame(self.aCardWin, bg=self.bgColor1)
         botF.grid(row=2, column=0, pady=15, padx=10)
-        self.e5 = Entry(botF)
-        self.e5.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
-        self.e6 = Entry(botF)
-        self.e6.grid(row=2, column=0, sticky=NSEW, pady=5, padx=5)
+        e5 = Entry(botF)
+        e5.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
+        e6 = Entry(botF)
+        e6.grid(row=2, column=0, sticky=NSEW, pady=5, padx=5)
         b3 = Button(botF, text="Set Value of Selected Card", bg=self.bgColor1, command=self.setValue)
         b3.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5)
         b4 = Button(botF, text="Transfer Selected Card", bg=self.bgColor1, command=self.transferCard)
@@ -709,7 +713,7 @@ class MartaHack:
     def updateAdminCardListBox(self,data):
         for item in self.adminCardContainer.grid_slaves():
             item.destroy()
-        header = ["Card #", "Value", "Owner"]
+        header = ["Card #", "New Owner", "Date Suspended", "Previous owner"]
         self.AdminCardListBox = MultiColumnListbox(self.adminCardContainer, header, data)
 
     def resetAdminCardMgt(self):
@@ -717,56 +721,19 @@ class MartaHack:
         self.adminCardMgt()
 
     def transferCard(self):
-        select = self.AdminCardListBox.gotClicked()
-        cardSelected = str(select[0])
-        newOwner = str(self.e6.get())
-        sqlone = """Select Username from Passenger;"""
-        self.cursor.execute(sqlone)
-        Passengers = self.cursor.fetchall()
-        newList = []
-        for x in Passengers:
-            newList.append(x[0])
-        print(newList)
-        conflictCards = """Select BreezeCardNum from Conflict;"""
-        self.cursor.execute(conflictCards)
-        Conflict = self.cursor.fetchall()
-        conflictList = []
-        for x in Conflict:
-            conflictList.append(x[0])
-        print(conflictList)
-        if newOwner in newList:
-            sqlThree = """Update Breezecard set BelongsTo = %s where BreezeCardNum = %s;"""
-            self.cursor.execute(sqlThree, (newOwner, cardSelected))
-            self.db.commit()
-            self.updateFilter()
-            if cardSelected in conflictList:
-                sqlFour = """Delete from Conflict where CardNumber = %s"""
-                self.cursor.execute(sqlFour, (cardSelected))
-                self.db.commit()
-                self.updateFilter()
-
-        else:
-            messagebox.showerror("Error","You have selected an Admin account or the account you selected does not exist! Please try again.")
-
+        sql = """Update ‘cs4400_Group_14’.’Breezecard’
+        set BelongsTo = newOwner where BreezecardNum = %s;
+        """
+        self.cursor.execute(sql, cardSelected)
+        self.db.commit()
 
     def setValue(self):
+        sql = """Update ‘cs4400_Group_14’.’Breezecard’
+        set Value = NewValue where BreezecardNum = %s;
+        """
 
-        Value = self.e5.get()
-        select = self.AdminCardListBox.gotClicked()
-        pValue = float(select[1]) + float(Value)
-        valueNew = str(pValue)
-        cardSelected = select[0]
-        if pValue <= 1000:
-            sql = '''Update Breezecard
-                set Value = %s
-                where BreezeCardNum = %s;
-                '''
-            self.cursor.execute(sql, (valueNew, cardSelected))
-            self.db.commit()
-            self.updateFilter()
-        else:
-            messagebox.showerror("Error", "You can not have more than $1000 on your Breezecard. Lower the amount you wish to add to your account")
-
+        self.cursor.execute(sql, cardSelected)
+        self.db.commit()
 
     def pFlowReport(self):
         #self.adminHomeWin.withdraw()
@@ -865,7 +832,10 @@ class MartaHack:
 
     def passHome(self):
         # buttons to call self.cardMgt, self.tripHist, self.logOut
-        self.homeWin.withdraw()
+        try:
+            self.homeWin.withdraw()
+        except:
+            pass
         self.passHomeWin = Toplevel()
         self.passHomeWin.protocol("WM_DELETE_WINDOW", self.endProgram)
         self.passHomeWin.title("Welcome to MARTA")
@@ -909,13 +879,21 @@ class MartaHack:
         for row in data:
             tups.append((str(row[0]) + " - " + str(row[1])))
         tups = tuple(tups)
-
+        sql = '''select Name from Station'''
+        self.cursor.execute(sql)
+        data2 = tuple(list(self.cursor.fetchall()))
+        data = []
+        for row in data2:
+            data.append(row[0])
         self.startStationVar = StringVar()
+        self.startStationVar.set(tups[0])
+        self.endStationVar = StringVar()
+        self.endStationVar.set(data[0])
 
-        e3 = Entry(topF)
-        e3.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
-        e4 = Entry(topF)
-        e4.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
+        self.startStat = OptionMenu(topF,self.startStationVar,*tups, command=self.changeCardSelect)
+        self.startStat.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
+        self.endStat = OptionMenu(topF,self.endStationVar,*data, command=self.changeCardSelect)
+        self.endStat.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
 
         botF = Frame(self.passHomeWin, bg=self.bgColor1)
         botF.grid(row=1, column=0, pady=15, padx=10)
@@ -953,16 +931,18 @@ class MartaHack:
 
     def changeCardSelect(self,newCard):
         #print("a new card has been selected!")
+        print("is the card",self.bCardNumvar.get()[2:-3],"?  ",type(self.bCardNumvar.get()))
+        newCard = self.bCardNumvar.get()[2:-3]
         sql = '''select value from Breezecard where BreezecardNum = %s'''
-        c = self.cursor.execute(sql,(newCard[0]))
+        c = self.cursor.execute(sql,(newCard))
         bzVal = self.cursor.fetchall()[0][0]
         self.bzValLabel.config(text=("$ " + str(bzVal)))
-        sql = '''select * from Trip where BreezecardNum = %s and EndsAt is null'''
-        #print("newCard is", newCard[0])
-        c = self.cursor.execute(sql,(newCard[0]))
-        #print(c)
         ### RUN SQL TO CHECK IF TRIP CAN BE STARTED FROM VALUE OF Card
         ### RUN SQL TO FIND WHAT STATIONS THE TRIP CAN BE ENDED AT AND POPULATE THE OPTION MENU WITH IT
+        sql = '''select startsAt from Trip where BreezecardNum = %s and EndsAt is null'''
+        #print("newCard is", newCard[0])
+        c = self.cursor.execute(sql,(newCard))
+        #print(c)
         if c>=1:
             try:
                 self.startB.destroy()
@@ -971,6 +951,25 @@ class MartaHack:
             self.inProgressLabel = Label(self.passHomeTopF,text= "Trip in Progress", bg=self.bgColor1)
             self.inProgressLabel.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
             self.endB.config(state="normal")
+            self.endStat.config(state="normal")
+            # get start station and disable it
+            startsAt = self.cursor.fetchall()[0][0]
+            print(startsAt)
+            sql = '''select Name,EnterFare,IsTrain from Station where stopID = %s'''
+            self.cursor.execute(sql,(startsAt))
+            row = self.cursor.fetchall()[0]
+            print(row)
+            self.startStationVar.set(row[0] + " - " + str(row[1]))
+            self.startStat.config(state=DISABLED)
+            isTrain = row[2]
+            sql = '''select Name from Station where isTrain = %s'''
+            self.cursor.execute(sql,(isTrain))
+            data = list(self.cursor.fetchall())
+            names = []
+            for row in data:
+                names.append(row[0])
+            self.endStat = OptionMenu(self.passHomeTopF,self.endStationVar,*names, command=self.changeCardSelect)
+            self.endStat.grid(row=3, column=1, sticky=NSEW, pady=5, padx=5)
         else:
             try:
                 self.inProgressLabel.destroy()
@@ -980,12 +979,34 @@ class MartaHack:
             self.startB.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
             ## IF BALANCE NOT ENOUGH TO START, DISABLE BUTTON
             self.endB.config(state=DISABLED)
+            self.endStat.config(state=DISABLED)
+            self.startStat.config(state="normal")
+            s = self.startStationVar.get()
+            print(float(s[s.rfind("-")+2:]))
+            d = float(s[s.rfind("-")+2:])
+            if d > bzVal:
+                self.startB.config(state=DISABLED)
 
     def startTrip(self):
-        pass
+        card = self.bCardNumvar.get()[2:-3]
+        s = self.startStationVar.get()
+        fare = float(s[s.rfind("-")+2:])
+        name = s[:s.rfind("-")-1]
+        startTime = strftime("%Y-%m-%d %H:%M:%S",gmtime())
+        sql = '''select StopID from Station where Name = %s and EnterFare = %s'''
+        self.cursor.execute(sql,(name,fare))
+        stopID = self.cursor.fetchone()[0]
+        sql = '''insert into Trip (Tripfare,StartTime,breezecardNum,StartsAt) values ({0},%s,%s,%s)'''.format(fare)
+        self.cursor.execute(sql,(startTime,card,stopID))
+        self.db.commit()
 
     def endTrip(self):
-        pass
+        sql = '''select stopID from Station where Name = {0}'''.format(self.endStationVar.get())
+        self.cursor.execute(sql)
+        end = self.cursor.fetchone()[0]
+        card = self.bCardNumvar.get()[2:-3]
+        sql = '''update Trip set EndsAt = %s where BreezeCardNum = %s and EndsAt is null'''
+        self.cursor.execute(sql,(end,card))
 
     def cardMgt(self):
         #self.passHomeWin.withdraw()
@@ -1007,13 +1028,11 @@ class MartaHack:
         data = [("34567890", "Conn Man", "6/5/3", "Avery"),
                 ("3456789", "Moo Daddy", "56/78/92", "Moo Son")]
         self.PassCardListBox = MultiColumnListbox(topF, header, data)
-        self.PassCardContainer = topF
-        self.findCard()
 
         midF = Frame(self.passCardWin, bg=self.bgColor1)
         midF.grid(row=2, column=0, pady=1, padx=10)
-        self.e =  Entry(midF)
-        self.e.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5, columnspan=2)
+        e1 = Entry(midF)
+        e1.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5, columnspan=2)
         b1 = Button(midF, text="Add Card", bg=self.bgColor1, command=self.addCard)
         b1.grid(row=1, column=2, sticky=NSEW, pady=5, padx=5)
         b3 = Button(midF, text="Delete Selected Card", bg=self.bgColor1, command=self.deleteCard)
@@ -1027,103 +1046,45 @@ class MartaHack:
 
         l2 = Label(botF, text="Credit Card #", bg=self.bgColor1)
         l2.grid(row=1, column=0, sticky=NSEW, pady=5, padx=5)
-        self.e2 = Entry(botF)
-        self.e2.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5, columnspan=2)
+        e2 = Entry(botF)
+        e2.grid(row=1, column=1, sticky=NSEW, pady=5, padx=5, columnspan=2)
 
         l3 = Label(botF, text="Value", bg=self.bgColor1)
         l3.grid(row=2, column=0, sticky=NSEW, pady=5, padx=5)
-        self.t = Entry(botF)
-        self.t.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
+        e3 = Entry(botF)
+        e3.grid(row=2, column=1, sticky=NSEW, pady=5, padx=5)
 
         b2 = Button(botF, text="Add Value", bg=self.bgColor1, command=self.addValue)
         b2.grid(row=2, column=2, sticky=NSEW, pady=5, padx=5)
 
-
     def findCard(self):
-        username = self.userE.get()
-        sql = """select BreezecardNum, Value from Breezecard where not exists
-                (select * from Breezecard join Conflict on Breezecard.BreezecardNum = Conflict.BreezecardNum 
-                where Breezecard.BelongsTo = %s) and BelongsTo = %s;
-                    """
-        self.cursor.execute(sql, (username, username))
+        sql = """select BreezecardNum from Breezecard where not exists
+        (select * from Breezecard join Conflict where BelongsTo = %s);
+            """
+        self.cursor.execute(sql, username)
         self.db.commit()
-        data = list(self.cursor.fetchall())
-        self.updatePassCardListBox(data)
-
-    def updatePassCardListBox(self,data):
-        for item in self.PassCardContainer.grid_slaves():
-            item.destroy()
-        header = ["Card #", "Value"]
-        self.PassCardListBox = MultiColumnListbox(self.PassCardContainer, header, data)
 
     def deleteCard(self):
-        card = self.PassCardListBox.gotClicked()
-        cardSelected = str(card[0])
-        sql = ''' Update Breezecard
-        set BelongsTo = null
-        where BreezeCardNum = %s;
+        sql = ''' Delete BelongsTo from ‘cs4400_Group_14’.’Breezecard’
+        where BreezecardNum = %s;
         '''
-        self.cursor.execute(sql,(cardSelected))
+        self.cursor.execute(sql,cardSelected)
         self.db.commit()
-        self.findCard()
 
     def addValue(self):
-
-        if len(self.e2.get()) == 16:
-            Value = self.t.get()
-            select = self.PassCardListBox.gotClicked()
-            pValue = float(select[1]) + float(Value)
-            valueNew = str(pValue)
-            cardSelected = select[0]
-            if pValue <= 1000:
-                sql = '''Update Breezecard
-                    set Value = %s
-                    where BreezeCardNum = %s;
-                    '''
-                self.cursor.execute(sql, (valueNew, cardSelected))
-                self.db.commit()
-                self.findCard()
-            else:
-                messagebox.showerror("Error", "You can not have more than $1000 on your Breezecard. Lower the amount you wish to add to your account")
-        else:
-            messagebox.showerror("Error", "Your Credit Card must have 16 numbers exactly. Please try Again.")
-
-    def createConflict(self, cardNum):
-        newUsername = self.userE.get()
-        card = cardNum
-        time = strftime("%Y-%m-%d %H:%M:%S", localtime())
-        sqlSecond = """ Insert into Conflict (Username, BreezecardNum, DateTime)
-             values (%s, %s, %s)"""
-        self.cursor.execute(sqlSecond, (newUsername, card, time))
+        sql = '''Update ‘cs4400_Group_14’.’Breezecard’
+            set Value = %s
+            where BreezeCardNum = %s;
+            '''
+        self.cursor.execute(sql, valueNew, cardSelected)
         self.db.commit()
-        self.findCard()
 
     def addCard(self):
-        username = self.userE.get()
-        card = self.e.get()
-        cardNum = str(card)
-        value = "0.00"
-        sql = """Select BreezecardNum from Breezecard;"""
-        self.cursor.execute(sql)
-        cardList = self.cursor.fetchall()
-        print(cardList)
-
-        if len(cardNum) ==16:
-            newList = []
-            for x in cardList:
-                newList.append(x[0])
-            if cardNum not in newList:
-                sql = '''Insert into Breezecard (BreezecardNum, Value, BelongsTo)
-                values (%s, %s, %s);
-                '''
-                self.cursor.execute(sql, (cardNum, value, username))
-                self.db.commit()
-                self.findCard()
-            else:
-                self.createConflict(cardNum)
-                messagebox.showerror("Error", "This Breezecard already has an owner. An Admin will solve this issue shortly.")
-        else:
-            messagebox.showerror("Error", "Breezecard Number must have 16 numbers exactly. Please try Again.")
+        sql = '''Insert into ‘cs4400_Group_14’.’Breezecard’ (‘BreezecardNum’, ‘Value’, ‘BelongsTo’)
+        values (%s, 0, %s);
+        '''
+        self.cursor.execute(sql, BreezeCardNum, Username)
+        self.db.commit()
 
     def tripHist(self):
         #self.passHomeWin.withdraw()
@@ -1152,16 +1113,12 @@ class MartaHack:
 
         botF = Frame(self.tripHistWin, bg=self.bgColor1)
         botF.grid(row=1, column=0, pady=15, padx=10)
-        header = ["Time", "Source", "Destination", "Fare Paid", "Card #"]
+        header = ["Card #", "New Owner", "Date Suspended", "Previous owner"]
         data = [("34567890", "Conn Man", "6/5/3", "Avery"),
                 ("3456789", "Moo Daddy", "56/78/92", "Moo Son")]
         self.TripHistListBox = MultiColumnListbox(botF, header, data)
-        self.PassCardContainer = botF
-        self.tripHistQuery()
-
 
     def tripHistQuery(self):
-        
         sql = '''SELECT
                     t2.startTime,
                     t2.source AS source,
@@ -1192,11 +1149,6 @@ class MartaHack:
                         INNER JOIN
                     Station ON t2.destination = Station.stopID
                 ORDER BY startTime DESC'''
-        self.cursor.execute(sql, ())
-        self.db.commit()
-        data = list(self.cursor.fetchall())
-        self.updatePassCardListBox(data)
-
 
     def logOut(self):
         self.endProgram()
