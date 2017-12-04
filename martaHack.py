@@ -8,7 +8,7 @@ import tkinter.ttk as ttk
 import csv
 import random
 from re import match
-from time import gmttime, strftime
+from time import gmtime, strftime
 
 
 # THINGS TO DO:
@@ -998,16 +998,21 @@ class MartaHack:
         stopID = self.cursor.fetchone()[0]
         sql = '''insert into Trip (Tripfare,StartTime,breezecardNum,StartsAt) values ({0},%s,%s,%s)'''.format(fare)
         self.cursor.execute(sql,(startTime,card,stopID))
+        sql = '''update Breezecard set Value = Value - {0}'''.format(fare)
+        self.cursor.execute(sql)
         self.db.commit()
+        self.changeCardSelect("")
 
     def endTrip(self):
-        sql = '''select stopID from Station where Name = {0}'''.format(self.endStationVar.get())
-        self.cursor.execute(sql)
+        print(self.endStationVar.get())
+        sql = '''select stopID from Station where Name = %s'''
+        self.cursor.execute(sql,(self.endStationVar.get()))
         end = self.cursor.fetchone()[0]
         card = self.bCardNumvar.get()[2:-3]
         sql = '''update Trip set EndsAt = %s where BreezeCardNum = %s and EndsAt is null'''
         self.cursor.execute(sql,(end,card))
         self.db.commit()
+        self.changeCardSelect("")
 
     def cardMgt(self):
         #self.passHomeWin.withdraw()
